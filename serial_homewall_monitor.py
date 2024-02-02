@@ -1,6 +1,7 @@
 import serial
 import datetime
 import time
+import subprocess
 
 def get_current_date():
     return datetime.datetime.now().strftime("%Y-%m-%d")
@@ -8,8 +9,25 @@ def get_current_date():
 def get_output_filename():
     return f'homewall_output_{get_current_date()}.txt'
 
+def get_serial_port_name():
+    try:
+        # Run dmesg to get the serial port name attached to 1-1.4
+        dmesg_output = subprocess.check_output(['dmesg']).decode('utf-8')
+        lines = dmesg_output.split('\n')[::-1]  # Reverse the lines
+
+        for line in lines:
+            if "usb 1-1.4" in line and "cdc_acm" in line:
+                parts = line.split()
+                for i, part in enumerate(parts):
+                    if part == "cdc_acm" and i < len(parts) - 1:
+                        return parts[i + 1]
+
+    except subprocess.CalledProcessError as e:
+        print(f"Error running dmesg: {e}")
+    
+    return None
+
 # Set the serial port parameters
-serial_port = '/dev/ttyACM1'  # Change this to your serial port
 baud_rate = 115200  # Change this to your desired baud rate
 
 # Open the serial port
@@ -20,14 +38,22 @@ output_file = get_output_filename()
 
 # Open the output file in append mode
 with open(output_file, 'a') as file:
+    last_error_time = None
+
     try:
         while True:
             try:
                 # Check if the serial port is open
                 if not ser.is_open:
                     # Attempt to reopen the serial port
-                    ser = serial.Serial(serial_port, baud_rate)
-                    print("Serial port reopened.")
+                    serial_port_name = get_serial_port_name()
+
+                    if serial_port_name:
+                        ser = serial.Serial(serial_port_name, baud_rate)
+                        print(f"Serial port reopened: {serial_port_name}")
+                        last_error_time = None  # Reset error time on successful connection
+                    else:
+                        print("Serial port not found. Retrying in 10 seconds.")
 
                 # Check if it's a new day
                 current_date = get_current_date()
@@ -56,8 +82,10 @@ with open(output_file, 'a') as file:
 
             except serial.SerialException:
                 # Handle serial port exception
-                print("Serial port error. Retrying in 10 seconds.")
-                time.sleep(10)
+                if last_error_time is None or time.time() - last_error_time >= 10:
+                    print("Serial port error. Retrying in 10 seconds.")
+                    last_error_time = time.time()
+                time.sleep(1)
 
     except KeyboardInterrupt:
         print("Program terminated by user.")

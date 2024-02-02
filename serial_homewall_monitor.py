@@ -16,16 +16,8 @@ def get_serial_port_name():
         # Run dmesg and filter with grep to get the serial port name attached to 1-1.4
         dmesg_output = subprocess.check_output(['dmesg | grep "USB ACM device"'], shell=True).decode('utf-8')
         lines = dmesg_output.split('\n')
-
-        for line in lines:
-            print(line)
-            if "usb 1-1.4" in line and "cdc_acm" in line:
-                parts = line.split()
-                for i, part in enumerate(parts):
-                    print(part)
-                    if part == "cdc_acm" and i < len(parts) - 1:
-                        latest_ttyacm = parts[i + 1]
-                        print(latest_ttyacm)
+        line=lines[-2]
+        print(line)
     except subprocess.CalledProcessError as e:
         print(f"Error running dmesg: {e}")
 

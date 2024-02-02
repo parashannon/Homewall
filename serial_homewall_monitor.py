@@ -1,5 +1,6 @@
 import serial
 import datetime
+import time
 
 def get_current_date():
     return datetime.datetime.now().strftime("%Y-%m-%d")
@@ -12,7 +13,7 @@ serial_port = '/dev/ttyACM1'  # Change this to your serial port
 baud_rate = 115200  # Change this to your desired baud rate
 
 # Open the serial port
-ser = serial.Serial(serial_port, baud_rate)
+ser = serial.Serial()
 
 # Initialize the output file
 output_file = get_output_filename()
@@ -21,6 +22,17 @@ output_file = get_output_filename()
 with open(output_file, 'a') as file:
     try:
         while True:
+            # Check if the serial port is open
+            if not ser.is_open:
+                try:
+                    # Attempt to reopen the serial port
+                    ser = serial.Serial(serial_port, baud_rate)
+                    print("Serial port reopened.")
+                except serial.SerialException:
+                    print("Failed to reopen serial port. Retrying in 10 seconds.")
+                    time.sleep(10)
+                    continue  # Retry the loop
+
             # Check if it's a new day
             current_date = get_current_date()
             if current_date != output_file[-14:-4]:

@@ -21,6 +21,7 @@ def get_serial_port_name():
             if "usb 1-1.4" in line and "cdc_acm" in line:
                 parts = line.split()
                 for i, part in enumerate(parts):
+                    print(part)
                     if part == "cdc_acm" and i < len(parts) - 1:
                         latest_ttyacm = parts[i + 1]
                         print(latest_ttyacm)

@@ -10,23 +10,24 @@ def get_output_filename():
     return f'homewall_output_{get_current_date()}.txt'
 
 def get_serial_port_name():
+    latest_ttyacm = None
+
     try:
         # Run dmesg and filter with grep to get the serial port name attached to 1-1.4
         dmesg_output = subprocess.check_output(['dmesg | grep "USB ACM device"'], shell=True).decode('utf-8')
         lines = dmesg_output.split('\n')
 
         for line in lines:
-            print(line)
             if "usb 1-1.4" in line and "cdc_acm" in line:
                 parts = line.split()
                 for i, part in enumerate(parts):
                     if part == "cdc_acm" and i < len(parts) - 1:
-                        return parts[i + 1]
+                        latest_ttyacm = parts[i + 1]
 
     except subprocess.CalledProcessError as e:
         print(f"Error running dmesg: {e}")
 
-    return None
+    return latest_ttyacm
 
 # Set the serial port parameters
 baud_rate = 115200  # Change this to your desired baud rate

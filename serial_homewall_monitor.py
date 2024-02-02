@@ -16,6 +16,7 @@ def get_serial_port_name():
         lines = dmesg_output.split('\n')[::-1]  # Reverse the lines
 
         for line in lines:
+            print(line)
             if "usb 1-1.4" in line and "cdc_acm" in line:
                 parts = line.split()
                 for i, part in enumerate(parts):

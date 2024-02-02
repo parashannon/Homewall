@@ -45,7 +45,6 @@ with open(output_file, 'a') as file:
                 if not ser.is_open:
                     # Attempt to reopen the serial port
                     serial_port_name = get_serial_port_name()
-                    print(latest_ttyacm)
                     if serial_port_name:
                         ser = serial.Serial(serial_port_name, baud_rate)
                         print(f"Serial port reopened: {serial_port_name}")

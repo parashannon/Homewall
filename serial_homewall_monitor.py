@@ -18,7 +18,7 @@ def get_serial_port_name():
         lines = dmesg_output.split('\n')
         line=lines[-2]
         print(line)
-        latest_ttyacm=line[34:41]
+        latest_ttyacm="/dev/"+line[34:41]
         print(latest_ttyacm)
     except subprocess.CalledProcessError as e:
         print(f"Error running dmesg: {e}")
@@ -45,7 +45,7 @@ with open(output_file, 'a') as file:
                 if not ser.is_open:
                     # Attempt to reopen the serial port
                     serial_port_name = get_serial_port_name()
-
+                    print(latest_ttyacm)
                     if serial_port_name:
                         ser = serial.Serial(serial_port_name, baud_rate)
                         print(f"Serial port reopened: {serial_port_name}")

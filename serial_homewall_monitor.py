@@ -12,7 +12,7 @@ def get_output_filename():
 def get_serial_port_name():
     try:
         # Run dmesg to get the serial port name attached to 1-1.4
-        dmesg_output = subprocess.check_output(['dmesg | grep "USB ACM device"']).decode('utf-8')
+        dmesg_output = subprocess.check_output(['dmesg']).decode('utf-8')
         lines = dmesg_output.split('\n')[::-1]  # Reverse the lines
 
         for line in lines:

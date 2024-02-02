@@ -17,6 +17,7 @@ int command_from = 0;
 const int ledPin = LED_BUILTIN;  // set ledPin to on-board LED
 const int buttonPin = 4;         // set buttonPin to digital pin 4
 unsigned long loop_count = 0;
+unsigned long t_reset_BLE=0;
 #define DATA_PIN 3
 
 BLEService WallServe("112");  // create service
@@ -44,7 +45,7 @@ unsigned long t_current;
 bool onboard_light = false;
 
 void setup() {
-  delay(2000);
+  delay(1000);
   t_update = millis() + 1000;
   pinMode(7, OUTPUT);     // sets the digital pin 13 as output
   digitalWrite(7, HIGH);  // sets the digital pin 13 on
@@ -60,31 +61,11 @@ void setup() {
 
   //pinMode(ledPin, OUTPUT);  // use the LED as an output
 
-  if (!BLE.begin()) {
-    Serial.println("starting Bluetooth® Low Energy module failed!");
-    while (1)
-      ;
-  }
+
 
   // set the local name peripheral advertises
 
-  // set the UUID for the service this peripheral advertises:
-  BLE.setAdvertisedService(WallServe);
-
-  // add the characteristics to the service
-  WallServe.addCharacteristic(ToggleLED);
-  WallServe.addCharacteristic(Problem_Number);
-  WallServe.addCharacteristic(FlipProblem);
-  WallServe.addCharacteristic(SaveProblem);
-  WallServe.addCharacteristic(RandomProblem);
-  // add the service
-  BLE.addService(WallServe);
-
-  FlipProblem.writeValue(0);
-  BLE.setLocalName("HomeWall2");
-  BLE.setDeviceName("HomeWall2");
-
-  BLE.advertise();
+  start_BLE();
 
   Serial.println("Bluetooth® device active, waiting for connections...");
   Serial.println("Awaiting your command");
@@ -92,10 +73,15 @@ void setup() {
 
   Serial.println("Setup Complete");
   Serial.flush();
+
+  t_reset_BLE=millis();
 }
 
 void loop() {
-
+  if (abs(millis()-t_reset_BLE)> 3600000){
+    t_reset_BLE=millis();
+    start_BLE ();
+  }
 
 
   if (ToggleLED.written()) {
@@ -189,4 +175,29 @@ void GetCommandSerial() {
       break;
     }
   }
+}
+
+void start_BLE () {
+
+    if (!BLE.begin()) {
+    Serial.println("starting Bluetooth® Low Energy module failed!");
+    while (1);
+  }
+    // set the UUID for the service this peripheral advertises:
+  BLE.setAdvertisedService(WallServe);
+
+  // add the characteristics to the service
+  WallServe.addCharacteristic(ToggleLED);
+  WallServe.addCharacteristic(Problem_Number);
+  WallServe.addCharacteristic(FlipProblem);
+  WallServe.addCharacteristic(SaveProblem);
+  WallServe.addCharacteristic(RandomProblem);
+  // add the service
+  BLE.addService(WallServe);
+
+  FlipProblem.writeValue(0);
+  BLE.setLocalName("HomeWall2");
+  BLE.setDeviceName("HomeWall2");
+
+  BLE.advertise();
 }

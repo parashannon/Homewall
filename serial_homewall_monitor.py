@@ -23,7 +23,7 @@ def get_serial_port_name():
                 for i, part in enumerate(parts):
                     if part == "cdc_acm" and i < len(parts) - 1:
                         latest_ttyacm = parts[i + 1]
-
+                        print(latest_ttyacm)
     except subprocess.CalledProcessError as e:
         print(f"Error running dmesg: {e}")
 

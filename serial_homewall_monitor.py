@@ -11,12 +11,11 @@ def get_output_filename():
 
 def get_serial_port_name():
     try:
-        # Run dmesg to get the serial port name attached to 1-1.4
-        dmesg_output = subprocess.check_output(['dmesg']).decode('utf-8')
-        lines = dmesg_output.split('\n')[::-1]  # Reverse the lines
+        # Run dmesg and filter with grep to get the serial port name attached to 1-1.4
+        dmesg_output = subprocess.check_output(['dmesg | grep "USB ACM device"'], shell=True).decode('utf-8')
+        lines = dmesg_output.split('\n')
 
         for line in lines:
-            print(line)
             if "usb 1-1.4" in line and "cdc_acm" in line:
                 parts = line.split()
                 for i, part in enumerate(parts):
@@ -25,7 +24,7 @@ def get_serial_port_name():
 
     except subprocess.CalledProcessError as e:
         print(f"Error running dmesg: {e}")
-    
+
     return None
 
 # Set the serial port parameters
@@ -48,7 +47,6 @@ with open(output_file, 'a') as file:
                 if not ser.is_open:
                     # Attempt to reopen the serial port
                     serial_port_name = get_serial_port_name()
-                    print(serial_port_name)
 
                     if serial_port_name:
                         ser = serial.Serial(serial_port_name, baud_rate)

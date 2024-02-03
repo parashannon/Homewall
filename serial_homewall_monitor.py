@@ -77,20 +77,20 @@ with open(output_file, 'a') as file:
                 # Print the data and timestamp to the console (optional)
                 print(f"{timestamp} - {data}")
 
-            except serial.SerialException:
+            except:
                 # Handle serial port exception
-                if last_error_time is None or time.time() - last_error_time >= 10:
-                    print("Serial port error. Retrying in 10 seconds.")
-                    last_error_time = time.time()
+                try:
+                    print("Serial port error. Retrying")
+                    
                     serial_port_name = get_serial_port_name()
                     if serial_port_name:
                         ser = serial.Serial(serial_port_name, baud_rate)
                         print(f"Serial port reopened: {serial_port_name}")
-                        last_error_time = None  # Reset error time on successful connection
                     else:
                         print("Serial port not found. Retrying in 10 seconds.")
-                    
-                time.sleep(1)
+                except:
+                    print("Could not connect")
+                time.sleep(5)
 
     except KeyboardInterrupt:
         print("Program terminated by user.")

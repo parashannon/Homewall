@@ -90,7 +90,8 @@ with open(output_file, 'a') as file:
                         print("Serial port not found. Retrying in 10 seconds.")
                 except:
                     print("Could not connect")
-                time.sleep(5)
+                    ser.close()
+                time.sleep(20)
 
     except KeyboardInterrupt:
         print("Program terminated by user.")

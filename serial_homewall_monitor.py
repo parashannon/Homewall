@@ -20,6 +20,7 @@ def get_serial_port_name():
         print(line)
         pattern= re.compile(r'tty([^\s:]+)')
         match = pattern.search(line)
+        print(match)
         latest_ttyacm='/dev/'+match
         print(latest_ttyacm)
     except subprocess.CalledProcessError as e:

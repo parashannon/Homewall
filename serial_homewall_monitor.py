@@ -18,7 +18,9 @@ def get_serial_port_name():
         lines = dmesg_output.split('\n')
         line=lines[-2]
         print(line)
-        latest_ttyacm='/dev/'+line[34:41]
+        pattern= re.compile(r'tty([^\s:]+)')
+        match = pattern.search(line)
+        latest_ttyacm='/dev/'+match
         print(latest_ttyacm)
     except subprocess.CalledProcessError as e:
         print(f"Error running dmesg: {e}")

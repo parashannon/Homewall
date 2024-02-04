@@ -14,7 +14,7 @@ def get_serial_port_name():
     latest_ttyacm = None
 
     # Run dmesg and filter with grep to get the serial port name attached to 1-1.4
-    dmesg_output = subprocess.check_output(['dmesg | grep "USB ACM device"'], shell=True).decode('utf-8')
+    dmesg_output = subprocess.check_output(['dmesg | grep "cdc_acm 1-1.4:1.0:"'], shell=True).decode('utf-8')
     lines = dmesg_output.split('\n')
     line=lines[-2]
     print(line)

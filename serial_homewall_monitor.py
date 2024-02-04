@@ -39,6 +39,16 @@ output_file = get_output_filename()
 
 # Open the output file in append mode
 with open(output_file, 'a') as file:
+    # Run dmesg and filter with grep to get the serial port name attached to 1-1.4
+    dmesg_output = subprocess.check_output(['dmesg | grep "USB ACM device"'], shell=True).decode('utf-8')
+    lines = dmesg_output.split('\n')
+    line=lines[-2]
+    print(line)
+    pattern= re.compile(r'tty([^\s:]+)')
+    match = pattern.search(line)
+    print(match)
+    latest_ttyacm='/dev/'+match
+    print(latest_ttyacm)
 
     try:
         while True:

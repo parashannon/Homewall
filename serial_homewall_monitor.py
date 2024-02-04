@@ -12,19 +12,18 @@ def get_output_filename():
 def get_serial_port_name():
     latest_ttyacm = None
 
-    try:
-        # Run dmesg and filter with grep to get the serial port name attached to 1-1.4
-        dmesg_output = subprocess.check_output(['dmesg | grep "USB ACM device"'], shell=True).decode('utf-8')
-        lines = dmesg_output.split('\n')
-        line=lines[-2]
-        print(line)
-        pattern= re.compile(r'tty([^\s:]+)')
-        match = pattern.search(line)
-        print(match)
-        latest_ttyacm='/dev/'+match
-        print(latest_ttyacm)
-    except subprocess.CalledProcessError as e:
-        print(f"Error running dmesg: {e}")
+
+    # Run dmesg and filter with grep to get the serial port name attached to 1-1.4
+    dmesg_output = subprocess.check_output(['dmesg | grep "USB ACM device"'], shell=True).decode('utf-8')
+    lines = dmesg_output.split('\n')
+    line=lines[-2]
+    print(line)
+    pattern= re.compile(r'tty([^\s:]+)')
+    match = pattern.search(line)
+    print(match)
+    latest_ttyacm='/dev/'+match
+    print(latest_ttyacm)
+
 
     return latest_ttyacm
 
@@ -39,7 +38,17 @@ output_file = get_output_filename()
 
 # Open the output file in append mode
 with open(output_file, 'a') as file:
-    last_error_time = None
+    # Run dmesg and filter with grep to get the serial port name attached to 1-1.4
+    dmesg_output = subprocess.check_output(['dmesg | grep "USB ACM device"'], shell=True).decode('utf-8')
+    lines = dmesg_output.split('\n')
+    line=lines[-2]
+    print(line)
+    pattern= re.compile(r'tty([^\s:]+)')
+    match = pattern.search(line)
+    print(match)
+    latest_ttyacm='/dev/'+match
+    print(latest_ttyacm)
+
 
     try:
         while True:
@@ -51,7 +60,7 @@ with open(output_file, 'a') as file:
                     if serial_port_name:
                         ser = serial.Serial(serial_port_name, baud_rate)
                         print(f"Serial port reopened: {serial_port_name}")
-                        last_error_time = None  # Reset error time on successful connection
+ 
                     else:
                         print("Serial port not found. Retrying in 10 seconds.")
 

@@ -47,7 +47,7 @@ with open(output_file, 'a') as file:
     pattern= re.compile(r'tty([^\s:]+)')
     match = pattern.search(line)
     print(match)
-    latest_ttyacm='/dev/'+match
+    latest_ttyacm='/dev/'+match.group(0)
     print(latest_ttyacm)
 
     try:

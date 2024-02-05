@@ -8,7 +8,7 @@
 
 */
 #include <ArduinoBLE.h>
-int problem_array[20]; 
+int problem_array[20];
 char command_in[256];
 char serial_message[256];
 int max_packet = 256;
@@ -18,7 +18,7 @@ int command_from = 0;
 const int ledPin = LED_BUILTIN;  // set ledPin to on-board LED
 const int buttonPin = 4;         // set buttonPin to digital pin 4
 unsigned long loop_count = 0;
-unsigned long t_reset_BLE=0;
+unsigned long t_reset_BLE = 0;
 
 #define DATA_PIN 3
 
@@ -31,7 +31,7 @@ BLELongCharacteristic ToggleLED("002'", BLERead | BLEWrite);     // 13D
 BLELongCharacteristic FlipProblem("003", BLERead | BLEWrite);    //fb
 BLEIntCharacteristic SaveProblem("004", BLERead | BLEWrite);     //fb
 BLEIntCharacteristic RandomProblem("005", BLERead | BLEWrite);   //fb
-BLELongCharacteristic LightStatus("006'", BLERead | BLEWrite);     // 13D
+BLELongCharacteristic LightStatus("006'", BLERead | BLEWrite);   // 13D
 
 // 115200
 
@@ -62,7 +62,7 @@ void setup() {
   Serial1.begin(115200);
   delay(100);
 
- 
+
 
   //pinMode(ledPin, OUTPUT);  // use the LED as an output
 
@@ -79,13 +79,13 @@ void setup() {
   Serial.println("Setup Complete");
   Serial.flush();
 
-  t_reset_BLE=millis();
+  t_reset_BLE = millis();
 }
 
 void loop() {
-  if (abs(millis()-t_reset_BLE)> 3600000){
-    t_reset_BLE=millis();
-    start_BLE ();
+  if (abs(millis() - t_reset_BLE) > 3600000) {
+    t_reset_BLE = millis();
+    start_BLE();
   }
 
 
@@ -130,7 +130,7 @@ void loop() {
 
   if (command_received) {
 
-    Serial1.println(command); // send command to LED arduino
+    Serial1.println(command);  // send command to LED arduino
     Serial1.flush();
 
     command_received = false;
@@ -185,7 +185,7 @@ void GetCommandSerial() {
 void GetSerial1() {
   int i_buff = 0;
   i_buff = 0;
-  bool message_rx=false;
+  bool message_rx = false;
   for (int i = 0; i < max_packet; i = i + 1) {
     serial_message[i] = 0;
   }
@@ -193,10 +193,10 @@ void GetSerial1() {
   i_buff = 0;
   while (Serial1.available() > 0) {
     // read the incoming byte:
-    message_rx=true;
+    message_rx = true;
     serial_message[i_buff] = Serial1.read();
     delay(1);
-    
+
     if (serial_message[i_buff] == 10) {
       break;  // if that is an end of line character, that's it for the message (for now)
     }
@@ -207,53 +207,71 @@ void GetSerial1() {
     }
   }
 
-  if (message_rx){
+  if (message_rx) {
     Serial.println(serial_message);
+    parse_problem() ;
+    for (int i_indx = 0; i_indx < 20; i_indx){
+      Serial.print(problem_array[i_indx]);
+      Serial.print(" ");
+    }
+
+
   }
 }
 
-void parse_problem(){
-  for (int ichar = 0; ichar < 256; ichar++){
+void parse_problem() {
+    for (int i_indx = 0; i_indx < 20; i_indx){
+      problem_array[i_indx]=0;
+      
+    }
 
-    if (serial_message[ichar] == 10 || serial_message[ichar] == 0 || serial_message[ichar] == 13){
+
+
+  for (int ichar = 0; ichar < 256; ichar++) {
+
+    if (serial_message[ichar] == 10 || serial_message[ichar] == 0 || serial_message[ichar] == 13) {
       break;
     }
-    if (serial_message[ichar] == 124){ // | character
+    if (serial_message[ichar] == 124) {  // | character
       ichar++;
-      int array_index=0;
+      int array_index = 0;
       while (serial_message[ichar] > 47 && serial_message[ichar] < 58) {
-        array_index=array_index*10+serial_message[ichar]-48;
+        array_index = array_index * 10 + serial_message[ichar] - 48;
         ichar++;
       }
       // the last line of the above was a space
       ichar++;
-      int intsign=1;
-      int array_val=0;
+      int intsign = 1;
+      int array_val = 0;
       while (serial_message[ichar] > 47 && serial_message[ichar] < 58 || serial_message[ichar] == 45) {
-        
-        if (serial_message[ichar] == 45){
-          intsign=-1;
-          
+
+        if (serial_message[ichar] == 45) {
+          intsign = -1;
+
         } else {
-        array_val=array_val*10+serial_message[ichar]-48;
+          array_val = array_val * 10 + serial_message[ichar] - 48;
         }
         ichar++;
       }
-      array_val=array_val*intsign;
-      ichar=ichar-1; // go back to the last thing
+      array_val = array_val * intsign;
+      ichar = ichar - 1;  // go back to the last thing
+
+      if (array_index >= 0 && array_index < 20) {
+        problem_array[array_index] = array_val;
+      }
       //problem_array[];
-
+    }
   }
 }
-}
 
-void start_BLE () {
+void start_BLE() {
 
-    if (!BLE.begin()) {
+  if (!BLE.begin()) {
     Serial.println("starting Bluetooth® Low Energy module failed!");
-    while (1);
+    while (1)
+      ;
   }
-    // set the UUID for the service this peripheral advertises:
+  // set the UUID for the service this peripheral advertises:
   BLE.setAdvertisedService(WallServe);
 
   // add the characteristics to the service

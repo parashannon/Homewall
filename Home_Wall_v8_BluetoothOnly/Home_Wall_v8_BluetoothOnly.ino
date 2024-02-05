@@ -10,6 +10,7 @@
 #include <ArduinoBLE.h>
 
 char command_in[256];
+char serial_message[256];
 int max_packet = 256;
 bool new_line;
 int line_to_update;
@@ -119,7 +120,7 @@ void loop() {
   }
 
   GetCommandSerial();
-
+  GetSerial1();
 
   // handle commands from the other arduino and pass these to the LCD display
 
@@ -174,6 +175,36 @@ void GetCommandSerial() {
     if (i_buff >= max_packet) {
       break;
     }
+  }
+}
+
+void GetSerial1() {
+  int i_buff = 0;
+  i_buff = 0;
+  bool message_rx=false;
+  for (int i = 0; i < max_packet; i = i + 1) {
+    serial_message[i] = 0;
+  }
+
+  i_buff = 0;
+  while (Serial1.available() > 0) {
+    // read the incoming byte:
+    message_rx=true;
+    serial_message[i_buff] = Serial1.read();
+    delay(1);
+    
+    if (serial_message[i_buff] == 10) {
+      break;  // if that is an end of line character, that's it for the message (for now)
+    }
+    i_buff++;
+
+    if (i_buff >= max_packet) {
+      break;
+    }
+  }
+
+  if (message_rx){
+    Serial.println(serial_message);
   }
 }
 

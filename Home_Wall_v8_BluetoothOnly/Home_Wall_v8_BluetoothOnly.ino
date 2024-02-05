@@ -8,7 +8,7 @@
 
 */
 #include <ArduinoBLE.h>
-
+int problem_array[20]; 
 char command_in[256];
 char serial_message[256];
 int max_packet = 256;
@@ -212,7 +212,40 @@ void GetSerial1() {
   }
 }
 
+void parse_problem(){
+  for (int ichar = 0; ichar < 256; ichar++){
 
+    if (serial_message[ichar] == 10 || serial_message[ichar] == 0 || serial_message[ichar] == 13){
+      break;
+    }
+    if (serial_message[ichar] == 124){ // | character
+      ichar++;
+      int array_index=0;
+      while (serial_message[ichar] > 47 && serial_message[ichar] < 58) {
+        array_index=array_index*10+serial_message[ichar]-48;
+        ichar++;
+      }
+      // the last line of the above was a space
+      ichar++;
+      int intsign=1;
+      int array_val=0;
+      while (serial_message[ichar] > 47 && serial_message[ichar] < 58 || serial_message[ichar] == 45) {
+        
+        if (serial_message[ichar] == 45){
+          intsign=-1;
+          
+        } else {
+        array_val=array_val*10+serial_message[ichar]-48;
+        }
+        ichar++;
+      }
+      array_val=array_val*intsign;
+      ichar=ichar-1; // go back to the last thing
+      //problem_array[];
+
+  }
+}
+}
 
 void start_BLE () {
 

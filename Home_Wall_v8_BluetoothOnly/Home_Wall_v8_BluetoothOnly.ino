@@ -19,6 +19,7 @@ const int ledPin = LED_BUILTIN;  // set ledPin to on-board LED
 const int buttonPin = 4;         // set buttonPin to digital pin 4
 unsigned long loop_count = 0;
 unsigned long t_reset_BLE=0;
+
 #define DATA_PIN 3
 
 BLEService WallServe("112");  // create service
@@ -30,6 +31,9 @@ BLELongCharacteristic ToggleLED("002'", BLERead | BLEWrite);     // 13D
 BLELongCharacteristic FlipProblem("003", BLERead | BLEWrite);    //fb
 BLEIntCharacteristic SaveProblem("004", BLERead | BLEWrite);     //fb
 BLEIntCharacteristic RandomProblem("005", BLERead | BLEWrite);   //fb
+BLELongCharacteristic LightStatus("006'", BLERead | BLEWrite);     // 13D
+
+// 115200
 
 bool flip_problem = false;
 int ProblemNumber;
@@ -207,6 +211,8 @@ void GetSerial1() {
     Serial.println(serial_message);
   }
 }
+
+
 
 void start_BLE () {
 

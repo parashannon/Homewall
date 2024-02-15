@@ -19,6 +19,13 @@ const int ledPin = LED_BUILTIN;  // set ledPin to on-board LED
 const int buttonPin = 4;         // set buttonPin to digital pin 4
 unsigned long loop_count = 0;
 unsigned long t_reset_BLE = 0;
+int problem_index=0;;
+bool message_rx = false;
+bool array_update=false;
+
+
+void(* resetFunc) (void) = 0; // create a standard reset function
+
 
 #define DATA_PIN 3
 
@@ -31,7 +38,7 @@ BLELongCharacteristic ToggleLED("002'", BLERead | BLEWrite);     // 13D
 BLELongCharacteristic FlipProblem("003", BLERead | BLEWrite);    //fb
 BLEIntCharacteristic SaveProblem("004", BLERead | BLEWrite);     //fb
 BLEIntCharacteristic RandomProblem("005", BLERead | BLEWrite);   //fb
-BLELongCharacteristic LightStatus("006'", BLERead | BLEWrite);   // 13D
+BLELongCharacteristic LightStatus("006'", BLERead | BLEWrite );   // 13D
 
 // 115200
 
@@ -130,10 +137,31 @@ void loop() {
 
   if (command_received) {
 
+    if (command_in[0]=='r' && command_in[1]=='e' && command_in[2]=='b'){
+      Serial.println("Rebooting");
+      delay(1000);
+      resetFunc();
+    }
+
     Serial1.println(command);  // send command to LED arduino
     Serial1.flush();
 
     command_received = false;
+
+  
+  }
+
+  if(array_update){
+    problem_index=0;
+    LightStatus.writeValue(problem_array[problem_index]);
+    problem_index++;
+  }
+
+  if (problem_index<20){
+    if (LightStatus.read()){
+      LightStatus.writeValue(problem_array[problem_index]);
+      problem_index++;
+    }
   }
   // **************************************
   // check Bluetooth
@@ -141,6 +169,8 @@ void loop() {
   BLE.poll();
 
   blink_light();
+  message_rx = false;
+  array_update=false;
 }
 
 
@@ -185,7 +215,7 @@ void GetCommandSerial() {
 void GetSerial1() {
   int i_buff = 0;
   i_buff = 0;
-  bool message_rx = false;
+
   for (int i = 0; i < max_packet; i = i + 1) {
     serial_message[i] = 0;
   }
@@ -209,59 +239,74 @@ void GetSerial1() {
 
   if (message_rx) {
     Serial.println(serial_message);
-    parse_problem() ;
-    for (int i_indx = 0; i_indx < 20; i_indx){
-      Serial.print(problem_array[i_indx]);
-      Serial.print(" ");
+    /*
+    if (serial_message[0] == 124) {
+      //Serial.println("This is a problem line");
+      parse_problem() ;
+      for (int i_indx = 0; i_indx < 20; i_indx++) {
+        Serial.print(problem_array[i_indx]);
+        Serial.print(" ");
+      }
+
     }
-
-
+    */
   }
 }
 
 void parse_problem() {
-    for (int i_indx = 0; i_indx < 20; i_indx){
-      problem_array[i_indx]=0;
-      
-    }
+  int array_index;
+  int ichar;
+  int array_val;
+  int intsign;
+  for (int i_indx = 0; i_indx < 20; i_indx++) {
+    problem_array[i_indx] = 0;
 
-
-
-  for (int ichar = 0; ichar < 256; ichar++) {
-
+  }
+  //Serial.println("Parse");
+  
+  ichar = 0;
+  while (ichar < 256) {
+  
     if (serial_message[ichar] == 10 || serial_message[ichar] == 0 || serial_message[ichar] == 13) {
+      //Serial.println("EOL of some flavor detected");
       break;
     }
     if (serial_message[ichar] == 124) {  // | character
       ichar++;
-      int array_index = 0;
-      while (serial_message[ichar] > 47 && serial_message[ichar] < 58) {
-        array_index = array_index * 10 + serial_message[ichar] - 48;
-        ichar++;
-      }
-      // the last line of the above was a space
-      ichar++;
-      int intsign = 1;
-      int array_val = 0;
-      while (serial_message[ichar] > 47 && serial_message[ichar] < 58 || serial_message[ichar] == 45) {
-
-        if (serial_message[ichar] == 45) {
-          intsign = -1;
-
-        } else {
-          array_val = array_val * 10 + serial_message[ichar] - 48;
-        }
-        ichar++;
-      }
-      array_val = array_val * intsign;
-      ichar = ichar - 1;  // go back to the last thing
-
-      if (array_index >= 0 && array_index < 20) {
-        problem_array[array_index] = array_val;
-      }
-      //problem_array[];
     }
+//Serial.println("Parsing Values");
+    array_index = 0;
+    while (serial_message[ichar] > 47 && serial_message[ichar] < 58) {
+      array_index = array_index * 10 + serial_message[ichar] - 48;
+      ichar++;
+    }
+    //Serial.print(array_index);
+    //Serial.print(" ");
+    // the last line of the above was a space
+    ichar++;
+    intsign = 1;
+    array_val = 0;
+    while (serial_message[ichar] > 47 && serial_message[ichar] < 58 || serial_message[ichar] == 45) {
+
+      if (serial_message[ichar] == 45) {
+        intsign = -1;
+
+      } else {
+        array_val = array_val * 10 + serial_message[ichar] - 48;
+      }
+      ichar++;
+    }
+    array_val = array_val * intsign;
+    //ichar = ichar - 1;  // go back to the last thing
+    //Serial.println(array_val);
+    if (array_index >= 0 && array_index < 20) {
+      problem_array[array_index] = array_val;
+    }
+    ichar++;
+    array_update=true;
+    //problem_array[];
   }
+
 }
 
 void start_BLE() {
@@ -280,6 +325,7 @@ void start_BLE() {
   WallServe.addCharacteristic(FlipProblem);
   WallServe.addCharacteristic(SaveProblem);
   WallServe.addCharacteristic(RandomProblem);
+  WallServe.addCharacteristic(LightStatus);
   // add the service
   BLE.addService(WallServe);
 

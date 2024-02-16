@@ -38,6 +38,9 @@ ser = serial.Serial()
 # Initialize the output file
 output_file = get_output_filename()
 
+# 
+new_open=1;
+
 # Open the output file in append mode
 with open(output_file, 'a') as file:
 
@@ -48,6 +51,7 @@ with open(output_file, 'a') as file:
                 # Check if the serial port is open
                 if not ser.is_open:
                     # Attempt to reopen the serial port
+                    new_open=1;
                     serial_port_name = get_serial_port_name()
                     if serial_port_name:
                         ser = serial.Serial(serial_port_name, baud_rate)
@@ -55,7 +59,12 @@ with open(output_file, 'a') as file:
  
                     else:
                         print("Serial port not found. Retrying in 10 seconds.")
-
+                if ser.is_open:
+                    if new_open==1:
+                        new_open=0;
+                        ser.write(f":V\n".encode())
+                
+                
                 # Check if it's a new day
                 current_date = get_current_date()
                 if current_date != output_file[-14:-4]:

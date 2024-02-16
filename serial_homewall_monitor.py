@@ -77,13 +77,14 @@ with open(output_file, 'a') as file:
                     word2 = r.get_random_word()
 
                     # Keep generating random words until the total number of characters is less than or equal to 18
-                    while len(word1) + len(word2) + 1 > 18:  # Adding 1 for the space between words
+                    while len(word1) + len(word2) + 1 > 17:  # Adding 1 for the space between words
                         word1 = r.get_random_word()
                         word2 = r.get_random_word()
 
                     # Send the generated words over the serial port
                     ser.write(f"{word1} {word2}\n".encode())
                     print(f"{word1} {word2}")
+                    file.write(f"{timestamp} - {word1} {word2}\n")
 
                 # Get the current timestamp
                 timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")

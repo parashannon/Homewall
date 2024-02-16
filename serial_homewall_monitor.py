@@ -80,6 +80,24 @@ with open(output_file, 'a') as file:
                 # Read data from the serial port
                 data = ser.readline().decode('utf-8').strip()
                 
+                # Check if the received line starts with "grw"
+                if data.startswith("grw"):
+                    # time.sleep(0.005)
+                    word1 = r.get_random_word()
+                    word2 = r.get_random_word()
+
+                    # Keep generating random words until the total number of characters is less than or equal to 18
+                    while len(word1) + len(word2) + 1 > 17:  # Adding 1 for the space between words
+                        word1 = r.get_random_word()
+                        word2 = r.get_random_word()
+
+                    # Send the generated words over the serial port
+                    # time.sleep(0.005)
+                    ser.write(f"{word1} {word2}\n".encode())
+                    print(f"Generated: {word1} {word2}\n")
+                    
+                    file.write(f"{timestamp} - {word1} {word2}\n")
+                
 
 
                 # Get the current timestamp
@@ -92,23 +110,7 @@ with open(output_file, 'a') as file:
                 # Print the data and timestamp to the console (optional)
                 print(f"{timestamp} - {data}")
                 
-                                # Check if the received line starts with "grw"
-                if data.startswith("grw"):
-                    time.sleep(0.005)
-                    word1 = r.get_random_word()
-                    word2 = r.get_random_word()
 
-                    # Keep generating random words until the total number of characters is less than or equal to 18
-                    while len(word1) + len(word2) + 1 > 17:  # Adding 1 for the space between words
-                        word1 = r.get_random_word()
-                        word2 = r.get_random_word()
-
-                    # Send the generated words over the serial port
-                    time.sleep(0.005)
-                    ser.write(f"{word1} {word2}\n".encode())
-                    print(f"Generated: {word1} {word2}\n")
-                    
-                    file.write(f"{timestamp} - {word1} {word2}\n")
 
             except:
                 # Handle serial port exception

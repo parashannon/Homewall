@@ -91,9 +91,10 @@ with open(output_file, 'a') as file:
                         word2 = r.get_random_word()
 
                     # Send the generated words over the serial port
+                    time.sleep(0.005)
                     ser.write(f"{word1} {word2}\n".encode())
                     print(f"{word1} {word2}")
-                    time.sleep(0.005)
+                    
                     file.write(f"{timestamp} - {word1} {word2}\n")
 
                 # Get the current timestamp

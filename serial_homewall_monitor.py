@@ -83,7 +83,7 @@ with open(output_file, 'a') as file:
 
                     # Send the generated words over the serial port
                     ser.write(f"{word1} {word2}\n".encode())
-                    print({word1} {word2})
+                    print(f"{word1} {word2}")
 
                 # Get the current timestamp
                 timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")

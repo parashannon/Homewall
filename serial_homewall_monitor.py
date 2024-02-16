@@ -80,8 +80,21 @@ with open(output_file, 'a') as file:
                 # Read data from the serial port
                 data = ser.readline().decode('utf-8').strip()
                 
-                # Check if the received line starts with "grw"
+
+
+                # Get the current timestamp
+                timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+                # Write data and timestamp to the file
+                file.write(f"{timestamp} - {data}\n")
+                file.flush()  # Ensure data is written to the file immediately
+
+                # Print the data and timestamp to the console (optional)
+                print(f"{timestamp} - {data}")
+                
+                                # Check if the received line starts with "grw"
                 if data.startswith("grw"):
+                    time.sleep(0.005)
                     word1 = r.get_random_word()
                     word2 = r.get_random_word()
 
@@ -93,19 +106,9 @@ with open(output_file, 'a') as file:
                     # Send the generated words over the serial port
                     time.sleep(0.005)
                     ser.write(f"{word1} {word2}\n".encode())
-                    print(f"{word1} {word2}")
+                    print(f"Generated: {word1} {word2}\n")
                     
                     file.write(f"{timestamp} - {word1} {word2}\n")
-
-                # Get the current timestamp
-                timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
-                # Write data and timestamp to the file
-                file.write(f"{timestamp} - {data}\n")
-                file.flush()  # Ensure data is written to the file immediately
-
-                # Print the data and timestamp to the console (optional)
-                print(f"{timestamp} - {data}")
 
             except:
                 # Handle serial port exception

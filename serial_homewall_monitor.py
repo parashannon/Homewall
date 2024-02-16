@@ -3,8 +3,8 @@ import datetime
 import time
 import subprocess
 import re
-from random_word import RandomWords
-r = RandomWords()
+import random
+
 
 def get_current_date():
     return datetime.datetime.now().strftime("%Y-%m-%d")
@@ -34,6 +34,17 @@ baud_rate = 115200  # Change this to your desired baud rate
 
 # Open the serial port
 ser = serial.Serial()
+
+# Default words
+default_words = ["hello", "world"]
+
+# Try to read words from the text file, use default words if it fails
+try:
+    with open("WordList.txt", "r") as f:
+        words = f.read().splitlines()
+except:
+    print("Failed to read WordList.txt. Using default words.")
+    words = default_words
 
 # Initialize the output file
 output_file = get_output_filename()
@@ -83,13 +94,13 @@ with open(output_file, 'a') as file:
                 # Check if the received line starts with "grw"
                 if data.startswith("grw"):
                     # time.sleep(0.005)
-                    word1 = r.get_random_word()
-                    word2 = r.get_random_word()
+                    word1 = random.choice(words)
+                    word2 = random.choice(words)
 
                     # Keep generating random words until the total number of characters is less than or equal to 18
-                    while len(word1) + len(word2) + 1 > 17:  # Adding 1 for the space between words
-                        word1 = r.get_random_word()
-                        word2 = r.get_random_word()
+                    while len(word1) + len(word2) + 1 > 16:  # Adding 1 for the space between words
+                        word1 = random.choice(words)
+                        word2 = random.choice(words)
 
                     # Send the generated words over the serial port
                     # time.sleep(0.005)

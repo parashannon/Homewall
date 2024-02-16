@@ -3,6 +3,8 @@ import datetime
 import time
 import subprocess
 import re
+from random_word import RandomWords
+r = RandomWords()
 
 def get_current_date():
     return datetime.datetime.now().strftime("%Y-%m-%d")
@@ -68,6 +70,20 @@ with open(output_file, 'a') as file:
 
                 # Read data from the serial port
                 data = ser.readline().decode('utf-8').strip()
+                
+                # Check if the received line starts with "grw"
+                if data.startswith("grw"):
+                    word1 = r.get_random_word()
+                    word2 = r.get_random_word()
+
+                    # Keep generating random words until the total number of characters is less than or equal to 18
+                    while len(word1) + len(word2) + 1 > 18:  # Adding 1 for the space between words
+                        word1 = r.get_random_word()
+                        word2 = r.get_random_word()
+
+                    # Send the generated words over the serial port
+                    ser.write(f"{word1} {word2}\n".encode())
+                    print({word1} {word2})
 
                 # Get the current timestamp
                 timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")

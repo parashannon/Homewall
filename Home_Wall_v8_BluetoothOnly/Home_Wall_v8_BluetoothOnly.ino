@@ -24,7 +24,7 @@ bool message_rx = false;
 bool array_update=false;
 
 
-void(* resetFunc) (void) = 0; // create a standard reset function
+//void(* resetFunc) (void) = 0; // create a standard reset function
 
 
 #define DATA_PIN 3
@@ -81,8 +81,6 @@ void setup() {
 
   Serial.println("Bluetooth® device active, waiting for connections...");
   Serial.println("Awaiting your command");
-  delay(100);
-
   Serial.println("Setup Complete");
   Serial.flush();
 
@@ -90,9 +88,12 @@ void setup() {
 }
 
 void loop() {
-  if (abs(millis() - t_reset_BLE) > 3600000) {
+  if ((millis() - t_reset_BLE) > 3600000) {
     t_reset_BLE = millis();
-    start_BLE();
+    //start_BLE();
+    Serial.println("Rebooting");
+    delay(1000);
+    reboot_function();
   }
 
 
@@ -131,7 +132,7 @@ void loop() {
   }
 
   GetCommandSerial();
-  GetSerial1();
+  //GetSerial1();
 
   // handle commands from the other arduino and pass these to the LCD display
 
@@ -139,8 +140,8 @@ void loop() {
 
     if (command_in[0]=='r' && command_in[1]=='e' && command_in[2]=='b'){
       Serial.println("Rebooting");
-      delay(1000);
-      resetFunc();
+      delay(100);
+      reboot_function();
     }
 
     Serial1.println(command);  // send command to LED arduino
@@ -151,6 +152,7 @@ void loop() {
   
   }
 
+  /*
   if(array_update){
     problem_index=0;
     LightStatus.writeValue(problem_array[problem_index]);
@@ -163,6 +165,7 @@ void loop() {
       problem_index++;
     }
   }
+  */
   // **************************************
   // check Bluetooth
   //*************************************
@@ -173,6 +176,9 @@ void loop() {
   array_update=false;
 }
 
+void reboot_function(){
+  NVIC_SystemReset(); 
+}
 
 void blink_light() {
   t_current = millis();
@@ -238,7 +244,7 @@ void GetSerial1() {
   }
 
   if (message_rx) {
-    Serial.println(serial_message);
+    // Serial.println(serial_message);
     /*
     if (serial_message[0] == 124) {
       //Serial.println("This is a problem line");

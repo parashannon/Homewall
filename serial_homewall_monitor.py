@@ -94,6 +94,7 @@ with open(output_file, 'a') as file:
                     # Send the generated words over the serial port
                     # time.sleep(0.005)
                     ser.write(f"{word1} {word2}\n".encode())
+                    ser.flush()
                     print(f"Generated: {word1} {word2}\n")
                     
                     file.write(f"{timestamp} - {word1} {word2}\n")

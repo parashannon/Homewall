@@ -107,9 +107,7 @@ with open(output_file, 'a') as file:
                     ser.write(f"{word1} {word2}\n".encode())
                     ser.flush()
                     print(f"Generated: {word1} {word2}\n")
-                    
-                    file.write(f"{timestamp} - {word1} {word2}\n")
-                
+            
 
 
                 # Get the current timestamp
@@ -117,6 +115,9 @@ with open(output_file, 'a') as file:
 
                 # Write data and timestamp to the file
                 file.write(f"{timestamp} - {data}\n")
+                if data.startswith("grw"):
+                    file.write(f"{timestamp} - {word1} {word2}\n")
+                
                 file.flush()  # Ensure data is written to the file immediately
 
                 # Print the data and timestamp to the console (optional)

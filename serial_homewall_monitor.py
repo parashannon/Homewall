@@ -47,7 +47,7 @@ except:
     words = default_words
 
 # Initialize the output file
-output_file = all_homewall_serial_output.txt #get_output_filename()
+output_file = 'all_homewall_serial_output.txt' #get_output_filename()
 
 # 
 new_open=1;

@@ -47,7 +47,7 @@ except:
     words = default_words
 
 # Initialize the output file
-output_file = get_output_filename()
+output_file = all_homewall_serial_output.txt #get_output_filename()
 
 # 
 new_open=1;
@@ -78,15 +78,15 @@ with open(output_file, 'a') as file:
                 
                 # Check if it's a new day
                 current_date = get_current_date()
-                if current_date != output_file[-14:-4]:
-                    # Close the current file
-                    file.close()
+                #if current_date != output_file[-14:-4]:
+                #    # Close the current file
+                #    file.close()
 
-                    # Get the new output file name
-                    output_file = get_output_filename()
+                #   # Get the new output file name
+                #    output_file = get_output_filename()
 
-                    # Open the new output file in append mode
-                    file = open(output_file, 'a')
+                #    # Open the new output file in append mode
+                #    file = open(output_file, 'a')
 
                 # Read data from the serial port
                 data = ser.readline().decode('utf-8').strip()

@@ -75,11 +75,8 @@ with open(output_file, 'a') as file:
 
 
     
-    result = search_and_return_integers(output_file, 'dealt disk')
-    if result:
-        print(result)
-    else:
-        print("Phrase not found or not enough integers found after the phrase.")
+    
+ 
 
     try:
         while True:
@@ -135,8 +132,19 @@ with open(output_file, 'a') as file:
                     ser.write(f"{word1} {word2}\n".encode())
                     ser.flush()
                     print(f"Generated: {word1} {word2}\n")
-            
-
+                    
+                if data.startswith("ilookup:"):
+                    phrase=data[len("ilookup:"):]
+                    result = search_and_return_integers(output_file, 'phrase')
+                    print('Finding:' + phrase)
+                    if result:
+                        
+                        data_to_send = ":X" + data
+                        serial_port.write(data_to_send.encode())
+                        print(data_to_send)
+                        ser.flush()
+                    else:
+                        print("Phrase or problem not found.")
 
                 # Get the current timestamp
                 timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")

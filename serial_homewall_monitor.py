@@ -11,6 +11,24 @@ def get_current_date():
 
 def get_output_filename():
     return f'homewall_output_{get_current_date()}.txt'
+    
+    
+    import re
+
+def search_and_return_integers(filename, phrase):
+    pattern = re.compile(r'(?<=- )(-?\d+(?:\s*,\s*-?\d+){19})')
+    with open(filename, 'r') as file:
+        found_phrase = False
+        for line in file:
+            if phrase in line:
+                found_phrase = True
+            elif found_phrase:
+                match = pattern.search(line)
+                if match:
+                    return match.group(1)
+    return None
+
+
 
 def get_serial_port_name():
     latest_ttyacm = None
@@ -56,6 +74,13 @@ new_open=1;
 with open(output_file, 'a') as file:
 
 
+    search_and_return_integers(output_file, 'dealt disk')
+    result = search_and_return_integers(filename, phrase)
+    if result:
+        print(result)
+    else:
+        print("Phrase not found or not enough integers found after the phrase.")
+
     try:
         while True:
             try:
@@ -87,6 +112,9 @@ with open(output_file, 'a') as file:
 
                 #    # Open the new output file in append mode
                 #    file = open(output_file, 'a')
+                
+                # test the file search
+
 
                 # Read data from the serial port
                 data = ser.readline().decode('utf-8').strip()

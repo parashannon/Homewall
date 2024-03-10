@@ -74,8 +74,8 @@ new_open=1;
 with open(output_file, 'a') as file:
 
 
-    search_and_return_integers(output_file, 'dealt disk')
-    result = search_and_return_integers(filename, phrase)
+    
+    result = search_and_return_integers(output_file, 'dealt disk')
     if result:
         print(result)
     else:

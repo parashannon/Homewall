@@ -27,7 +27,14 @@ def search_and_return_integers(filename, phrase):
                 if match:
                     return match.group(1)
     return None
-
+    
+def extract_last_two_words(phrase):
+    # Remove any characters that are not letters or spaces from the phrase
+    cleaned_phrase = ''.join(filter(lambda x: x.isalpha() or x.isspace(), phrase))
+    # Split the cleaned phrase into words
+    words = cleaned_phrase.split()
+    # Return the last two words joined by a space, or the entire phrase if it has less than two words
+    return ' '.join(words[-2:]) if len(words) >= 2 else cleaned_phrase
 
 
 def get_serial_port_name():
@@ -135,7 +142,9 @@ with open(output_file, 'a') as file:
                     
                 if data.startswith("ilookup:"):
                     phrase=data[len("ilookup:"):]
-                    result = search_and_return_integers(output_file, 'phrase')
+                    
+                    phrase=extract_last_two_words(phrase)
+                    result = search_and_return_integers(output_file, phrase)
                     print('Finding:' + phrase)
                     if result:
                         

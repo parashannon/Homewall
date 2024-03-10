@@ -148,7 +148,7 @@ with open(output_file, 'a') as file:
                     print('Finding:' + phrase)
                     if result:
                         time.sleep(0.005)
-                        data_to_send = ":X" + data
+                        data_to_send = ":X" + result
                         ser.write(data_to_send.encode())
                         print(data_to_send)
                         ser.flush()

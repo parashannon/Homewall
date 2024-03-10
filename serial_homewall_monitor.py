@@ -147,9 +147,9 @@ with open(output_file, 'a') as file:
                     result = search_and_return_integers(output_file, phrase)
                     print('Finding:' + phrase)
                     if result:
-                        
+                        time.sleep(0.005)
                         data_to_send = ":X" + data
-                        serial_port.write(data_to_send.encode())
+                        ser.write(data_to_send.encode())
                         print(data_to_send)
                         ser.flush()
                     else:

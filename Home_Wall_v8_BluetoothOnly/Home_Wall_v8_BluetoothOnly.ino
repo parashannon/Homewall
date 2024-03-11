@@ -40,6 +40,13 @@ BLEIntCharacteristic SaveProblem("004", BLERead | BLEWrite);     //fb
 BLEIntCharacteristic RandomProblem("005", BLERead | BLEWrite);   //fb
 BLELongCharacteristic LightStatus("006'", BLERead | BLEWrite );   // 13D
 
+
+// *****************************NEW**************************************
+char ArrayInputValue[20]; // Array to store incoming data
+BLECharacteristic CharInput("007", BLERead | BLEWrite, sizeof(ArrayInputValue)); // 20 characters maximum
+// *****************************NEW**************************************
+
+
 // 115200
 
 bool flip_problem = false;
@@ -68,6 +75,10 @@ void setup() {
   delay(100);
   Serial1.begin(115200);
   delay(100);
+
+  for (int i =1; i < 20; i++){
+    ArrayInputValue[i]=' ';
+  }
 
 
 
@@ -101,35 +112,56 @@ void loop() {
     Serial.println("Bluetooth Command T");
     Serial.println(ToggleLED.value());
     command_received = true;
-    command = "T" + String(ToggleLED.value());
+    command = ":T" + String(ToggleLED.value());
   }
   if (FlipProblem.written()) {
     Serial.println("Bluetooth Command F");
     Serial.println(FlipProblem.value());
     command_received = true;
-    command = "F";
+    command = ":F";
   }
 
   if (Problem_Number.written()) {
     Serial.println("Bluetooth Command P");
     Serial.println(Problem_Number.value());
     command_received = true;
-    command = "P" + String(Problem_Number.value());
+    command = ":P" + String(Problem_Number.value());
   }
 
   if (SaveProblem.written()) {
     Serial.println("Bluetooth Command S");
     Serial.println(SaveProblem.value());
     command_received = true;
-    command = "S" + String(SaveProblem.value());
+    command = ":S" + String(SaveProblem.value());
   }
 
   if (RandomProblem.written()) {
     Serial.println("Bluetooth Command R");
     Serial.println(RandomProblem.value());
     command_received = true;
-    command = "R" + String(RandomProblem.value());
+    command = ":R" + String(RandomProblem.value());
   }
+
+  // *****************************NEW**************************************
+  // Check if the new ArrayInput characteristic has been written to
+  if (CharInput.written()) {
+    for (int i =1; i < 20; i++){
+      ArrayInputValue[i]=' ';
+    }
+    CharInput.readValue(ArrayInputValue, sizeof(ArrayInputValue));
+    Serial.println("Bluetooth Command Array Input");
+    // Assuming you want to print the received value
+    // Note: Direct access to ArrayInputValue is possible since it's the storage for the characteristic
+    Serial.write(ArrayInputValue, sizeof(ArrayInputValue)); // This prints the array as received
+    Serial.println(); // New line for clarity
+    
+    Serial1.write(ArrayInputValue, sizeof(ArrayInputValue)); // This prints the array as received
+    Serial1.println();
+    command_received = false;  // Update this as needed based on how you handle the data
+  }
+  // *****************************NEW**************************************
+
+    
 
   GetCommandSerial();
   //GetSerial1();
@@ -332,6 +364,14 @@ void start_BLE() {
   WallServe.addCharacteristic(SaveProblem);
   WallServe.addCharacteristic(RandomProblem);
   WallServe.addCharacteristic(LightStatus);
+
+  // *****************************NEW**************************************
+  // Add the new characteristic to the service
+  WallServe.addCharacteristic(CharInput);
+  // *****************************NEW**************************************
+
+
+  
   // add the service
   BLE.addService(WallServe);
 

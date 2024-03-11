@@ -20,7 +20,7 @@ def search_and_return_integers(filename, phrase):
     with open(filename, 'r') as file:
         found_phrase = False
         for line in file:
-            if phrase in line:
+            if phrase.lower() in line.lower():
                 found_phrase = True
             elif found_phrase:
                 match = pattern.search(line)

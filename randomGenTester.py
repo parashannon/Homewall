@@ -98,9 +98,9 @@ with open(output_file, 'a') as file:
                         er.flush()
                 
                 
-                    for iLvL in range(1, 11):
-                        for iProblem in range(1, 501):
-                            
+                    iProblem=1
+                    iLvL=1;
+                    while iLvL < 11:                             
                             if status==1: 
                                 ser.write(f":R{iLvL}\n".encode())
                                 ser.flush()
@@ -131,9 +131,12 @@ with open(output_file, 'a') as file:
                                 file.write(f"{prepend_integer}, {data}\n")
                                 file.flush()  # Ensure data is written to the file immediately
                                 status=1
+                                iProblem=iProblem+1
                                 time.sleep(0.5)
 
-     
+                            if iProblem > 500
+                                iProblem=1
+                                iLvl=iLvL+1
                 
 
 

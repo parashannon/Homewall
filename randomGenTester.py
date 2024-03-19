@@ -99,10 +99,11 @@ with open(output_file, 'a') as file:
                     iProblem=1
                     iLvL=1;
                     while iLvL < 11:                             
-                            if status==1 and time.time()-start_time >5: 
+                            if status==1 and time.time()-start_time > 5: 
                                 ser.write(f":R{iLvL}\n".encode())
                                 ser.flush()
                                 status=2
+                                print("Sending Request" + iProblem)
                                 print(f":R{iLvL}\n")
 
                             # Read data from the serial port

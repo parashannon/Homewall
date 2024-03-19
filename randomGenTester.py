@@ -120,7 +120,7 @@ with open(output_file, 'a') as file:
                             ser.flush()
                             print(f"Generated: {word1} {word2}\n")
                             
-                            
+                        integers = [int(x.strip()) for x in data.split(",")]    
                         if len(integers) == 20:
                             # Prompt the user for an integer to prepend to the line
                             prepend_integer = iLvl

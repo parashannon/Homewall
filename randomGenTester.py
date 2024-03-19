@@ -77,57 +77,58 @@ iLvL=1
 with open(output_file, 'a') as file:
 
   
-        while iLvL<11:
-            print("tick")
-            time.sleep(0.25)
-            try:
-                # Check if the serial port is open
-                if not ser.is_open:
-                    # Attempt to reopen the serial port
-                    new_open=1;
-                    serial_port_name = get_serial_port_name()
-                    if serial_port_name:
-                        ser = serial.Serial(serial_port_name, baud_rate)
-                        print(f"Serial port reopened: {serial_port_name}")
- 
-                    else:
-                        print("Serial port not found. Retrying in 10 seconds.")
-                
-            except:
-                # Handle serial port exception
-                try:
-                    print("Serial port error. Retrying")
-                    
-                    serial_port_name = get_serial_port_name()
-                    if serial_port_name:
-                        ser = serial.Serial(serial_port_name, baud_rate)
-                        print(f"Serial port reopened: {serial_port_name}")
-                    else:
-                        print("Serial port not found. Retrying in 10 seconds.")
-                except:
-                    print("Could not connect")
-                    ser.close()
-                time.sleep(20)
-            if ser.is_open:
-                if new_open==1:
-                    new_open=0;
-            
-                           
-                if status==1 and time.time()-start_time > 5: 
-                    ser.write(f":R{iLvL}\n".encode())
-                    ser.flush()
-                    status=2
-                    print("Sending Request" + iProblem)
-                    print(f":R{iLvL}\n")
+    while iLvL<11:
+        print("tick")
+        time.sleep(0.25)
+        try:
+            # Check if the serial port is open
+            if not ser.is_open:
+                # Attempt to reopen the serial port
+                new_open=1;
+                serial_port_name = get_serial_port_name()
+                if serial_port_name:
+                    ser = serial.Serial(serial_port_name, baud_rate)
+                    print(f"Serial port reopened: {serial_port_name}")
 
-                # Read data from the serial port
+                else:
+                    print("Serial port not found. Retrying in 10 seconds.")
+            
+        except:
+            # Handle serial port exception
+            try:
+                print("Serial port error. Retrying")
+                
+                serial_port_name = get_serial_port_name()
+                if serial_port_name:
+                    ser = serial.Serial(serial_port_name, baud_rate)
+                    print(f"Serial port reopened: {serial_port_name}")
+                else:
+                    print("Serial port not found. Retrying in 10 seconds.")
+            except:
+                print("Could not connect")
+                ser.close()
+            time.sleep(20)
+        if ser.is_open:
+            if new_open==1:
+                new_open=0;
+        
+                       
+            if status==1 and time.time()-start_time > 5: 
+                ser.write(f":R{iLvL}\n".encode())
+                ser.flush()
+                status=2
+                print("Sending Request" + iProblem)
+                print(f":R{iLvL}\n")
+
+            # Read data from the serial port
+            if ser.in_waiting > 0:
                 data = ser.readline().decode('utf-8').strip()
                  # Print the data and timestamp to the console (optional)
                 print(f"{data}")
 
                 # Check if the received line starts with "grw"
                 if data.startswith("grw"):
-    
+
                     word1 = "hello"
                     word2 = "world"
 
@@ -151,5 +152,5 @@ with open(output_file, 'a') as file:
                 if iProblem > 500:
                     iProblem=1
                     iLvL=iLvL+1
-            
+        
 

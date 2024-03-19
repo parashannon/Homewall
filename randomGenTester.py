@@ -95,44 +95,45 @@ with open(output_file, 'a') as file:
                     if new_open==1:
                         new_open=0;
                         ser.write(f":V\n".encode())
-                        time.sleep(1)
+                        er.flush()
                 
                 
-                for iLvL in range(1, 11):
-                    for iProblem in range(1, 501):
-                        
-                        if status==1: 
-                            ser.write(f":R{iLvL}\n".encode())
-                            status=2
-                            print(f":R{iLvL}\n")
-
-                        # Read data from the serial port
-                        data = ser.readline().decode('utf-8').strip()
-                        
-
-                        # Check if the received line starts with "grw"
-                        if data.startswith("grw"):
-            
-                            word1 = "hello"
-                            word2 = "world"
-
-                            # Send the generated words over the serial port
-                            # time.sleep(0.005)
-                            ser.write(f"{word1} {word2}\n".encode())
-                            ser.flush()
-                            print(f"Generated: {word1} {word2}\n")
+                    for iLvL in range(1, 11):
+                        for iProblem in range(1, 501):
                             
-                        integers = [int(x.strip()) for x in data.split(",")]    
-                        if len(integers) == 20:
-                            # Prompt the user for an integer to prepend to the line
-                            prepend_integer = iLvl
-                            file.write(f"{prepend_integer}, {data}\n")
-                            file.flush()  # Ensure data is written to the file immediately
-                            status=1
-                            time.sleep(0.5)
+                            if status==1: 
+                                ser.write(f":R{iLvL}\n".encode())
+                                ser.flush()
+                                status=2
+                                print(f":R{iLvL}\n")
 
-                        # Print the data and timestamp to the console (optional)
-                        print(f"{data}")
+                            # Read data from the serial port
+                            data = ser.readline().decode('utf-8').strip()
+                             # Print the data and timestamp to the console (optional)
+                            print(f"{data}")
+
+                            # Check if the received line starts with "grw"
+                            if data.startswith("grw"):
+                
+                                word1 = "hello"
+                                word2 = "world"
+
+                                # Send the generated words over the serial port
+                                # time.sleep(0.005)
+                                ser.write(f"{word1} {word2}\n".encode())
+                                ser.flush()
+                                print(f"Generated: {word1} {word2}\n")
+                                
+                            integers = [int(x.strip()) for x in data.split(",")]    
+                            if len(integers) == 20:
+                                # Prompt the user for an integer to prepend to the line
+                                prepend_integer = iLvl
+                                file.write(f"{prepend_integer}, {data}\n")
+                                file.flush()  # Ensure data is written to the file immediately
+                                status=1
+                                time.sleep(0.5)
+
+     
                 
 
 

@@ -100,9 +100,9 @@ with open(output_file, 'a') as file:
                 for iLvL in range(1, 11):
                     for iProblem in range(1, 501):
                         
-                        if status==1 
+                        if status==1: 
                             ser.write(f":R{iLvL}\n".encode())
-                            status==2
+                            status=2
 
                         # Read data from the serial port
                         data = ser.readline().decode('utf-8').strip()

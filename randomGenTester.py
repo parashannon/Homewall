@@ -63,9 +63,7 @@ ser = serial.Serial()
 # Default words
 default_words = ["hello", "world"]
 
-# Try to read words from the text file, use default words if it fails
 
-print("Failed to read WordList.txt. Using default words.")
 words = default_words
 
 # Initialize the output file
@@ -95,7 +93,7 @@ with open(output_file, 'a') as file:
                     if new_open==1:
                         new_open=0;
                         ser.write(f":V\n".encode())
-                        er.flush()
+                        ser.flush()
                 
                 
                     iProblem=1

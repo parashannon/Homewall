@@ -95,6 +95,7 @@ with open(output_file, 'a') as file:
                     if new_open==1:
                         new_open=0;
                         ser.write(f":V\n".encode())
+                        time.sleep(1)
                 
                 
                 for iLvL in range(1, 11):
@@ -103,6 +104,7 @@ with open(output_file, 'a') as file:
                         if status==1: 
                             ser.write(f":R{iLvL}\n".encode())
                             status=2
+                            print(f":R{iLvL}\n")
 
                         # Read data from the serial port
                         data = ser.readline().decode('utf-8').strip()

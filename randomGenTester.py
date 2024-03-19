@@ -69,7 +69,7 @@ words = default_words
 # Initialize the output file
 output_file = 'random_gen_output.txt' #get_output_filename()
 start_time = time.time()  # Record the start time
-# 
+print(start_time)
 new_open=1
 status=1
 iLvL=1
@@ -78,6 +78,8 @@ with open(output_file, 'a') as file:
 
   
         while iLvL<11:
+            print("tick")
+            time.sleep(0.25)
             try:
                 # Check if the serial port is open
                 if not ser.is_open:
@@ -143,6 +145,7 @@ with open(output_file, 'a') as file:
                     file.flush()  # Ensure data is written to the file immediately
                     status=1
                     iProblem=iProblem+1
+                    print("Problem: " + iProblem)
                     time.sleep(0.5)
 
                 if iProblem > 500:

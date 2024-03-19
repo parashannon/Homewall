@@ -68,7 +68,7 @@ words = default_words
 
 # Initialize the output file
 output_file = 'random_gen_output.txt' #get_output_filename()
-
+start_time = time.time()  # Record the start time
 # 
 new_open=1;
 status=1;
@@ -99,7 +99,7 @@ with open(output_file, 'a') as file:
                     iProblem=1
                     iLvL=1;
                     while iLvL < 11:                             
-                            if status==1 and time.time() >5: 
+                            if status==1 and time.time()-start_time >5: 
                                 ser.write(f":R{iLvL}\n".encode())
                                 ser.flush()
                                 status=2

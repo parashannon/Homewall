@@ -151,13 +151,3 @@ with open(output_file, 'a') as file:
                             iLvL=iLvL+1
             
 
-   
-        
-
-    except KeyboardInterrupt:
-        print("Program terminated by user.")
-    finally:
-        # Close the serial port
-        ser.close()
-        # Close the last file
-        file.close()

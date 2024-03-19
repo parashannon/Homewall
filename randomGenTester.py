@@ -75,85 +75,71 @@ status=1;
 # Open the output file in append mode
 with open(output_file, 'a') as file:
 
-    try:
-        while True:
-            try:
-                # Check if the serial port is open
-                if not ser.is_open:
-                    # Attempt to reopen the serial port
-                    new_open=1;
-                    serial_port_name = get_serial_port_name()
-                    if serial_port_name:
-                        ser = serial.Serial(serial_port_name, baud_rate)
-                        print(f"Serial port reopened: {serial_port_name}")
+  
+    while True:
+        try:
+            # Check if the serial port is open
+            if not ser.is_open:
+                # Attempt to reopen the serial port
+                new_open=1;
+                serial_port_name = get_serial_port_name()
+                if serial_port_name:
+                    ser = serial.Serial(serial_port_name, baud_rate)
+                    print(f"Serial port reopened: {serial_port_name}")
+
+                else:
+                    print("Serial port not found. Retrying in 10 seconds.")
+            if ser.is_open:
+                if new_open==1:
+                    new_open=0;
+                    ser.write(f":V\n".encode())
+                    ser.flush()
+            
+            
+                iProblem=1
+                iLvL=1;
+                while iLvL < 11:                             
+                        if status==1 and time.time()-start_time > 5: 
+                            ser.write(f":R{iLvL}\n".encode())
+                            ser.flush()
+                            status=2
+                            print("Sending Request" + iProblem)
+                            print(f":R{iLvL}\n")
+
+                        # Read data from the serial port
+                        data = ser.readline().decode('utf-8').strip()
+                         # Print the data and timestamp to the console (optional)
+                        print(f"{data}")
+
+                        # Check if the received line starts with "grw"
+                        if data.startswith("grw"):
+            
+                            word1 = "hello"
+                            word2 = "world"
+
+                            # Send the generated words over the serial port
+                            # time.sleep(0.005)
+                            ser.write(f"{word1} {word2}\n".encode())
+                            ser.flush()
+                            print(f"Generated: {word1} {word2}\n")
+                            
+                        integers = [int(x.strip()) for x in data.split(",")]    
+                        if len(integers) == 20:
+                            # Prompt the user for an integer to prepend to the line
+                            prepend_integer = iLvl
+                            file.write(f"{prepend_integer}, {data}\n")
+                            file.flush()  # Ensure data is written to the file immediately
+                            status=1
+                            iProblem=iProblem+1
+                            time.sleep(0.5)
+
+                        if iProblem > 500:
+                            iProblem=1
+                            iLvl=iLvL+1
+            
+
+
  
-                    else:
-                        print("Serial port not found. Retrying in 10 seconds.")
-                if ser.is_open:
-                    if new_open==1:
-                        new_open=0;
-                        ser.write(f":V\n".encode())
-                        ser.flush()
-                
-                
-                    iProblem=1
-                    iLvL=1;
-                    while iLvL < 11:                             
-                            if status==1 and time.time()-start_time > 5: 
-                                ser.write(f":R{iLvL}\n".encode())
-                                ser.flush()
-                                status=2
-                                print("Sending Request" + iProblem)
-                                print(f":R{iLvL}\n")
-
-                            # Read data from the serial port
-                            data = ser.readline().decode('utf-8').strip()
-                             # Print the data and timestamp to the console (optional)
-                            print(f"{data}")
-
-                            # Check if the received line starts with "grw"
-                            if data.startswith("grw"):
-                
-                                word1 = "hello"
-                                word2 = "world"
-
-                                # Send the generated words over the serial port
-                                # time.sleep(0.005)
-                                ser.write(f"{word1} {word2}\n".encode())
-                                ser.flush()
-                                print(f"Generated: {word1} {word2}\n")
-                                
-                            integers = [int(x.strip()) for x in data.split(",")]    
-                            if len(integers) == 20:
-                                # Prompt the user for an integer to prepend to the line
-                                prepend_integer = iLvl
-                                file.write(f"{prepend_integer}, {data}\n")
-                                file.flush()  # Ensure data is written to the file immediately
-                                status=1
-                                iProblem=iProblem+1
-                                time.sleep(0.5)
-
-                            if iProblem > 500:
-                                iProblem=1
-                                iLvl=iLvL+1
-                
-
-
-            except:
-                # Handle serial port exception
-                try:
-                    print("Serial port error. Retrying")
-                    
-                    serial_port_name = get_serial_port_name()
-                    if serial_port_name:
-                        ser = serial.Serial(serial_port_name, baud_rate)
-                        print(f"Serial port reopened: {serial_port_name}")
-                    else:
-                        print("Serial port not found. Retrying in 10 seconds.")
-                except:
-                    print("Could not connect")
-                    ser.close()
-                time.sleep(20)
 
     except KeyboardInterrupt:
         print("Program terminated by user.")

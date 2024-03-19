@@ -132,7 +132,7 @@ with open(output_file, 'a') as file:
                                 iProblem=iProblem+1
                                 time.sleep(0.5)
 
-                            if iProblem > 500
+                            if iProblem > 500:
                                 iProblem=1
                                 iLvl=iLvL+1
                 

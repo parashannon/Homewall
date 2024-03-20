@@ -114,11 +114,13 @@ with open(output_file, 'a') as file:
         
                        
             if status==1 and time.time()-start_time > 2: 
-                ser.write(f":R{iLvL}\n".encode())
+                ser.write(f":R{(iLvL-1)*10+7}\n".encode())
                 ser.flush()
+                
                 status=2
                 print(f"Sending Request{iProblem}\n")
                 print(f":R{(iLvL-1)*10+7}\n")
+                time.sleep(0.1)
 
             # Read data from the serial port
             if ser.in_waiting > 0:

@@ -137,17 +137,19 @@ with open(output_file, 'a') as file:
                     ser.write(f"{word1} {word2}\n".encode())
                     ser.flush()
                     print(f"Generated: {word1} {word2}\n")
-                    
-                integers = [int(x.strip()) for x in data.split(",")]    
-                if len(integers) == 20:
-                    # Prompt the user for an integer to prepend to the line
-                    prepend_integer = iLvL
-                    file.write(f"{prepend_integer}, {data}\n")
-                    file.flush()  # Ensure data is written to the file immediately
-                    status=1
-                    iProblem=iProblem+1
-                    print(f"Problem: {iProblem}")
-                    time.sleep(0.5)
+                try: 
+                    integers = [int(x.strip()) for x in data.split(",")]    
+                    if len(integers) == 20:
+                        # Prompt the user for an integer to prepend to the line
+                        prepend_integer = iLvL
+                        file.write(f"{prepend_integer}, {data}\n")
+                        file.flush()  # Ensure data is written to the file immediately
+                        status=1
+                        iProblem=iProblem+1
+                        print(f"Problem: {iProblem}")
+                        time.sleep(0.5)
+                except: 
+                    print("Not integers")
 
                 if iProblem > 500:
                     iProblem=1

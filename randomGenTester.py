@@ -67,7 +67,7 @@ default_words = ["hello", "world"]
 words = default_words
 
 # Initialize the output file
-output_file = 'random_gen_output.txt' #get_output_filename()
+output_file = 'data_random_gen_output.txt' #get_output_filename()
 start_time = time.time()  # Record the start time
 print(start_time)
 new_open=1
@@ -153,9 +153,9 @@ with open(output_file, 'a') as file:
                             print(f"Problem: {iProblem}")
                             time.sleep(0.5)
                     except: 
-                        print("")
+                        status=status
 
-                    if iProblem > 100:
+                    if iProblem > 300:
                         iProblem=1
                         iLvL=iLvL+1
                 except:

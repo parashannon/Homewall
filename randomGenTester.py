@@ -117,7 +117,7 @@ with open(output_file, 'a') as file:
                 ser.write(f":R{iLvL}\n".encode())
                 ser.flush()
                 status=2
-                print("Sending Request" + iProblem)
+                print(f"Sending Request{iProblem}\n")
                 print(f":R{iLvL}\n")
 
             # Read data from the serial port
@@ -146,7 +146,7 @@ with open(output_file, 'a') as file:
                     file.flush()  # Ensure data is written to the file immediately
                     status=1
                     iProblem=iProblem+1
-                    print("Problem: " + iProblem)
+                    print(f"Problem: {iProblem}")
                     time.sleep(0.5)
 
                 if iProblem > 500:

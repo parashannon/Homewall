@@ -71,8 +71,9 @@ output_file = 'random_gen_output.txt' #get_output_filename()
 start_time = time.time()  # Record the start time
 print(start_time)
 new_open=1
+req_time=time.time()+500
 status=1
-iLvL=6
+iLvL=2
 iProblem=1;
 # Open the output file in append mode
 with open(output_file, 'a') as file:
@@ -113,10 +114,10 @@ with open(output_file, 'a') as file:
                 new_open=0;
         
                        
-            if status==1 and time.time()-start_time > 2: 
+            if (status==1 and time.time()-start_time > 2) or (time.time()-req_time>30): 
                 ser.write(f":R{(iLvL-1)*10+7}\n".encode())
                 ser.flush()
-                
+                req_time=time.time()
                 status=2
                 print(f"Sending Request{iProblem}\n")
                 print(f":R{(iLvL-1)*10+7}\n")

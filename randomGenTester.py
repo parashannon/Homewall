@@ -118,7 +118,7 @@ with open(output_file, 'a') as file:
                 ser.flush()
                 status=2
                 print(f"Sending Request{iProblem}\n")
-                print(f":R{iLvL}\n")
+                print(f":R{iLvL*7}\n")
 
             # Read data from the serial port
             if ser.in_waiting > 0:
@@ -151,7 +151,7 @@ with open(output_file, 'a') as file:
                 except: 
                     print("Not integers")
 
-                if iProblem > 500:
+                if iProblem > 100:
                     iProblem=1
                     iLvL=iLvL+1
         

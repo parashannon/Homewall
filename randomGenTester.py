@@ -152,7 +152,7 @@ with open(output_file, 'a') as file:
                             print(f"Problem: {iProblem}")
                             time.sleep(0.5)
                     except: 
-
+                        print("")
 
                     if iProblem > 100:
                         iProblem=1

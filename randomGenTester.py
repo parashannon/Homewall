@@ -73,7 +73,7 @@ print(start_time)
 new_open=1
 req_time=time.time()+500
 status=1
-iLvL=8
+iLvL=1
 iProblem=1;
 # Open the output file in append mode
 with open(output_file, 'a') as file:

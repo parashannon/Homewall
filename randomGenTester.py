@@ -72,7 +72,7 @@ start_time = time.time()  # Record the start time
 print(start_time)
 new_open=1
 status=1
-iLvL=1
+iLvL=6
 iProblem=1;
 # Open the output file in append mode
 with open(output_file, 'a') as file:

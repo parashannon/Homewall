@@ -73,12 +73,12 @@ print(start_time)
 new_open=1
 status=1
 iLvL=1
+iProblem=1;
 # Open the output file in append mode
 with open(output_file, 'a') as file:
 
   
     while iLvL<11:
-        print("tick")
         time.sleep(0.25)
         try:
             # Check if the serial port is open
@@ -113,7 +113,7 @@ with open(output_file, 'a') as file:
                 new_open=0;
         
                        
-            if status==1 and time.time()-start_time > 5: 
+            if status==1 and time.time()-start_time > 2: 
                 ser.write(f":R{iLvL}\n".encode())
                 ser.flush()
                 status=2

@@ -75,11 +75,12 @@ req_time=time.time()+500
 status=1
 iLvL=1
 iProblem=1;
+icount=0
 # Open the output file in append mode
 with open(output_file, 'a') as file:
 
   
-    while iLvL<11:
+    while icount<3000:
         time.sleep(0.25)
         try:
             # Check if the serial port is open
@@ -152,12 +153,16 @@ with open(output_file, 'a') as file:
                             iProblem=iProblem+1
                             print(f"Problem: {iProblem}")
                             time.sleep(0.5)
+                            icount = icount+1
+                            print(icount)
                     except: 
                         status=status
-
-                    if iProblem > 300:
+			
+                    if iProblem > 5:
                         iProblem=1
                         iLvL=iLvL+1
+                    if iLvL > 10:
+                        iLvL=1
                 except:
                     print("Invalid chars")
             

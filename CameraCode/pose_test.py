@@ -1,31 +1,48 @@
 import cv2
-from picamera2 import Picamera2
 import time
+from picamera2 import Picamera2, Preview
+import traceback
 
-# Initialize and configure the camera for preview mode
-picam2 = Picamera2()
-config = picam2.create_preview_configuration(main={"size": (640, 480)})
-picam2.configure(config)
-picam2.start()
-time.sleep(1)  # Allow time for the camera to adjust
+def main():
+    try:
+        print("Initializing Picamera2...")
+        picam2 = Picamera2()
 
-print("Camera started. Press 'c' to capture an image, 'q' to quit.")
+        # Create a preview configuration.
+        # You can try using create_still_configuration() as an alternative.
+        config = picam2.create_preview_configuration(main={"size": (640, 480)})
+        print("Camera configuration:")
+        print(config)
+        picam2.configure(config)
+        
+        print("Starting camera...")
+        picam2.start()
+        
+        # Give the camera a longer time to settle.
+        time.sleep(2)
+        
+        # Capture a frame
+        print("Capturing a frame...")
+        frame = picam2.capture_array()
+        
+        if frame is None:
+            print("Error: No frame returned by capture_array()")
+        else:
+            print("Frame captured successfully. Shape:", frame.shape)
+            # Save frame to file for inspection
+            cv2.imwrite("debug_capture.jpg", frame)
+            print("Frame saved as debug_capture.jpg")
+            
+        # Display the frame using OpenCV (if applicable)
+        cv2.imshow("Picamera2 Debug", frame)
+        print("Displaying frame. Press any key to exit.")
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
+        
+        picam2.stop()
+    except Exception as e:
+        print("An exception occurred:")
+        traceback.print_exc()
 
-while True:
-    # Capture the current frame as a NumPy array
-    frame = picam2.capture_array()
-
-    # Display the frame in an OpenCV window
-    cv2.imshow("Picamera2 Video", frame)
-    key = cv2.waitKey(1) & 0xFF
-
-    if key == ord('c'):
-        # Save the current frame as an image file
-        cv2.imwrite("capture.jpg", frame)
-        print("Image captured and saved as capture.jpg")
-    elif key == ord('q'):
-        break
-
-# Clean up
-picam2.stop()
-cv2.destroyAllWindows()
+if __name__ == "__main__":
+    main()

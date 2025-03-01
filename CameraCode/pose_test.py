@@ -7,7 +7,7 @@ from tflite_runtime.interpreter import Interpreter
 # ----------------------------
 # Configuration and Constants
 # ----------------------------
-MODEL_PATH = "1.tflite"
+MODEL_PATH = "movenet_singlepose_lightning.tflite"
 INPUT_SIZE = 192  # Model expects 192x192 input
 
 # Define keypoints (for labeling, if desired) and the skeletal connections (edges)
@@ -28,14 +28,14 @@ EDGES = [
 # Helper Functions
 # ----------------------------
 def preprocess_frame(frame):
-    """Preprocess the captured frame for the MoveNet model."""
-    # Convert BGR (Picamera2 default may be BGR) to RGB
+    # Convert BGR to RGB
     rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-    # Resize to the model's expected input size
+    # Resize to the expected input size
     resized_frame = cv2.resize(rgb_frame, (INPUT_SIZE, INPUT_SIZE))
-    # Normalize pixel values to [0, 1]
-    input_data = np.expand_dims(resized_frame.astype(np.float32) / 255.0, axis=0)
+    # Ensure the data type is uint8 (i.e. no normalization needed)
+    input_data = np.expand_dims(resized_frame.astype(np.uint8), axis=0)
     return input_data
+
 
 def draw_keypoints(frame, keypoints, threshold=0.3):
     """Draw detected keypoints and skeleton on the frame."""

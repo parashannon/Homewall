@@ -28,15 +28,14 @@ EDGES = [
 # Helper Functions
 # ----------------------------
 def preprocess_frame(frame):
-    # Convert BGR to RGB
+    # Convert BGR (from Picamera2) to RGB
     rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-    # Resize to the model's expected input size
-    resized_frame = cv2.resize(rgb_frame, (INPUT_SIZE, INPUT_SIZE))
-    # Convert to uint8 and add batch dimension (axis=0)
+    # Resize the frame to 192x192
+    resized_frame = cv2.resize(rgb_frame, (192, 192))
+    # Add one batch dimension to get shape (1, 192, 192, 3)
     input_data = np.expand_dims(resized_frame.astype(np.uint8), axis=0)
-    # Add an extra dimension (axis=1) if the model expects [1,1,192,192,3]
-    input_data = np.expand_dims(input_data, axis=1)
     return input_data
+
 
 
 def draw_keypoints(frame, keypoints, threshold=0.3):

@@ -92,6 +92,7 @@ while True:
 
     # Preprocess the frame for the model
     input_data = preprocess_frame(frame)
+    print("Expected input shape:", input_details[0]['shape'])
 
     # Run inference
     interpreter.set_tensor(input_details[0]['index'], input_data)

@@ -30,10 +30,12 @@ EDGES = [
 def preprocess_frame(frame):
     # Convert BGR to RGB
     rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-    # Resize to the expected input size
+    # Resize to the model's expected input size
     resized_frame = cv2.resize(rgb_frame, (INPUT_SIZE, INPUT_SIZE))
-    # Ensure the data type is uint8 (i.e. no normalization needed)
+    # Convert to uint8 and add batch dimension (axis=0)
     input_data = np.expand_dims(resized_frame.astype(np.uint8), axis=0)
+    # Add an extra dimension (axis=1) if the model expects [1,1,192,192,3]
+    input_data = np.expand_dims(input_data, axis=1)
     return input_data
 
 

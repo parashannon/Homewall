@@ -7,7 +7,7 @@ from tflite_runtime.interpreter import Interpreter
 # ----------------------------
 # Configuration and Constants
 # ----------------------------
-MODEL_PATH = "movenet_singlepose_lightning.tflite"
+MODEL_PATH = "4.tflite"
 INPUT_SIZE = 192  # Model expects 192x192 input
 
 # Define keypoints (for labeling, if desired) and the skeletal connections (edges)

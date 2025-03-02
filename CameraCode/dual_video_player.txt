@@ -1,0 +1,122 @@
+import tkinter as tk
+from tkinter import filedialog
+from tkintervideo import TkinterVideo
+
+# Function to update the progress slider periodically
+def update_slider(player, slider):
+    # Retrieve the current playback time (in seconds)
+    try:
+        current_time = player.current_duration()
+        slider.set(current_time)
+    except Exception:
+        pass
+    # Schedule the next update (every 100 ms)
+    player.after(100, update_slider, player, slider)
+
+# Callback to change the playback position when the slider is moved
+def seek_video(player, slider):
+    try:
+        # Seek the video to the new position (slider value in seconds)
+        player.seek(slider.get())
+    except Exception:
+        pass
+
+# Play both videos simultaneously
+def play_both():
+    left_player.play()
+    right_player.play()
+
+# Load a video file for a given player
+def load_video(player):
+    filename = filedialog.askopenfilename(filetypes=[("Video Files", "*.mp4 *.avi *.mov")])
+    if filename:
+        player.load(filename)
+
+# Create the main tkinter window
+root = tk.Tk()
+root.title("Dual Video Player")
+
+# Create a frame for the left video player
+left_frame = tk.Frame(root)
+left_frame.grid(row=0, column=0, padx=10, pady=10)
+
+# Create a frame for the right video player
+right_frame = tk.Frame(root)
+right_frame.grid(row=0, column=1, padx=10, pady=10)
+
+# Create video player widgets in each frame
+left_player = TkinterVideo(master=left_frame, scaled=True)
+left_player.pack(expand=True, fill="both")
+
+right_player = TkinterVideo(master=right_frame, scaled=True)
+right_player.pack(expand=True, fill="both")
+
+# Control frame for the left player
+left_control = tk.Frame(left_frame)
+left_control.pack(fill="x", pady=(5,0))
+
+# Progress slider for left player
+left_slider = tk.Scale(left_control, from_=0, to=100, orient="horizontal", command=lambda x: seek_video(left_player, left_slider))
+left_slider.pack(side="top", fill="x", expand=True)
+
+# Buttons for left player
+left_button_frame = tk.Frame(left_control)
+left_button_frame.pack(side="top", pady=5)
+
+left_play_button = tk.Button(left_button_frame, text="Play", command=left_player.play)
+left_play_button.pack(side="left", padx=5)
+
+left_pause_button = tk.Button(left_button_frame, text="Pause", command=left_player.pause)
+left_pause_button.pack(side="left", padx=5)
+
+left_load_button = tk.Button(left_button_frame, text="Load Video", command=lambda: load_video(left_player))
+left_load_button.pack(side="left", padx=5)
+
+# Control frame for the right player
+right_control = tk.Frame(right_frame)
+right_control.pack(fill="x", pady=(5,0))
+
+# Progress slider for right player
+right_slider = tk.Scale(right_control, from_=0, to=100, orient="horizontal", command=lambda x: seek_video(right_player, right_slider))
+right_slider.pack(side="top", fill="x", expand=True)
+
+# Buttons for right player
+right_button_frame = tk.Frame(right_control)
+right_button_frame.pack(side="top", pady=5)
+
+right_play_button = tk.Button(right_button_frame, text="Play", command=right_player.play)
+right_play_button.pack(side="left", padx=5)
+
+right_pause_button = tk.Button(right_button_frame, text="Pause", command=right_player.pause)
+right_pause_button.pack(side="left", padx=5)
+
+right_load_button = tk.Button(right_button_frame, text="Load Video", command=lambda: load_video(right_player))
+right_load_button.pack(side="left", padx=5)
+
+# Global play both button at the bottom of the main window
+play_both_button = tk.Button(root, text="Play Both Videos", command=play_both)
+play_both_button.grid(row=1, column=0, columnspan=2, pady=10)
+
+# Once a video is loaded, set the slider range to match the video duration.
+def on_left_loaded(event):
+    try:
+        duration = left_player.duration()
+        left_slider.config(to=duration)
+    except Exception:
+        pass
+
+def on_right_loaded(event):
+    try:
+        duration = right_player.duration()
+        right_slider.config(to=duration)
+    except Exception:
+        pass
+
+left_player.bind("<<Loaded>>", on_left_loaded)
+right_player.bind("<<Loaded>>", on_right_loaded)
+
+# Start updating the sliders
+update_slider(left_player, left_slider)
+update_slider(right_player, right_slider)
+
+root.mainloop()

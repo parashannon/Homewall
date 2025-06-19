@@ -4,10 +4,12 @@ import time
 import subprocess
 import re
 import random
-import os
+import glob
+import subprocess
 from pathlib import Path
 
-SERIAL_ID = "Arduino_LLC_Arduino_NANO_33_IoT_95FF576E50304D48502E3120FF102841"
+TARGET_ID = "Arduino_LLC_Arduino_NANO_33_IoT_95FF576E50304D48502E3120FF102841"
+
 def get_current_date():
     return datetime.datetime.now().strftime("%Y-%m-%d")
 
@@ -61,28 +63,45 @@ def get_serial_port_name_old():
     
     
     
+import glob
+import subprocess
+from pathlib import Path
 
-def get_serial_port_name(serial_id: str = SERIAL_ID) -> str:
+TARGET_ID = "Arduino_LLC_Arduino_NANO_33_IoT_95FF576E50304D48502E3120FF102841"
+
+def get_serial_port_name() -> str:
     """
-    Search /dev/serial/by-id/ for a device whose filename contains
-    `serial_id` and return the resolved /dev/tty* path.
-
-    Raises
-    ------
-    FileNotFoundError
-        If the device cannot be found.
+    Find the /dev/tty* path for the board whose ID_SERIAL/ID_SERIAL_SHORT
+    contains TARGET_ID.  Raises FileNotFoundError if not found.
     """
-    by_id_dir = Path("/dev/serial/by-id")
-    if not by_id_dir.exists():
-        print("/dev/serial/by-id does not exist (no USB-serial devices?)")
+    # Collect every CDC-ACM or FTDI-style device currently present.
+    for devnode in glob.glob("/dev/ttyACM*") + glob.glob("/dev/ttyUSB*"):
+        # udevadm prints KEY=VALUE lines; we capture them as text.
+        try:
+            props = subprocess.check_output(
+                ["udevadm", "info", "--name", devnode, "--query=property"],
+                text=True,
+                stderr=subprocess.DEVNULL,   # keep output clean
+            )
+        except subprocess.CalledProcessError:
+            continue  # skip nodes udevadm can’t examine
 
-    for symlink in by_id_dir.iterdir():
-        if serial_id in symlink.name:
-            # Resolve the symlink to get the actual /dev/ttyACM* node
-            print(os.path.realpath(symlink))
-            return os.path.realpath(symlink)
+        # Look for either ID_SERIAL=... or ID_SERIAL_SHORT=...
+        for line in props.splitlines():
+            if line.startswith(("ID_SERIAL=", "ID_SERIAL_SHORT=")) and TARGET_ID in line:
+                return devnode
 
-    print(f"Arduino with ID '{serial_id}' not found")
+    raise FileNotFoundError(f"No USB-serial device with ID '{TARGET_ID}' found")
+
+
+# ------------- quick test -------------
+if __name__ == "__main__":
+    try:
+        port = get_serial_port_name()
+        print("Arduino Nano 33 IoT found on:", port)
+    except FileNotFoundError as e:
+        print(e)
+
 
 # Set the serial port parameters
 baud_rate = 115200  # Change this to your desired baud rate

@@ -4,6 +4,7 @@ import time
 import subprocess
 import re
 import random
+import path
 
 
 def get_current_date():
@@ -37,10 +38,12 @@ def extract_last_two_words(phrase):
     return ' '.join(words[-2:]) if len(words) >= 2 else cleaned_phrase
 
 
-def get_serial_port_name():
+def get_serial_port_name_old():
     latest_ttyacm = None
 
     # Run dmesg and filter with grep to get the serial port name attached to 1-1.4
+    # Arduino_LLC_Arduino_NANO_33_IoT_95FF576E50304D48502E3120FF102841
+
     dmesg_output = subprocess.check_output(['dmesg | grep "cdc_acm 1-1.2:1.0:"'], shell=True).decode('utf-8')
     lines = dmesg_output.split('\n')
     line=lines[-2]
@@ -53,6 +56,31 @@ def get_serial_port_name():
 
 
     return latest_ttyacm
+    
+    
+    
+    SERIAL_ID = "Arduino_LLC_Arduino_NANO_33_IoT_95FF576E50304D48502E3120FF102841"
+
+def get_serial_port_name(serial_id: str = SERIAL_ID) -> str:
+    """
+    Search /dev/serial/by-id/ for a device whose filename contains
+    `serial_id` and return the resolved /dev/tty* path.
+
+    Raises
+    ------
+    FileNotFoundError
+        If the device cannot be found.
+    """
+    by_id_dir = Path("/dev/serial/by-id")
+    if not by_id_dir.exists():
+        raise FileNotFoundError("/dev/serial/by-id does not exist (no USB-serial devices?)")
+
+    for symlink in by_id_dir.iterdir():
+        if serial_id in symlink.name:
+            # Resolve the symlink to get the actual /dev/ttyACM* node
+            return os.path.realpath(symlink)
+
+    raise FileNotFoundError(f"Arduino with ID '{serial_id}' not found")
 
 # Set the serial port parameters
 baud_rate = 115200  # Change this to your desired baud rate

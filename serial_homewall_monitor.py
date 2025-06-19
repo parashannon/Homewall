@@ -47,7 +47,7 @@ def get_serial_port_name():
     # Run dmesg and filter with grep to get the serial port name attached to 1-1.4
     # Arduino_LLC_Arduino_NANO_33_IoT_95FF576E50304D48502E3120FF102841
 
-    dmesg_output = subprocess.check_output(['dmesg | grep "cdc_acm 1-1.3:1.0:"'], shell=True).decode('utf-8')
+    dmesg_output = subprocess.check_output(['dmesg | grep "cdc_acm 1-1.1:1.0:"'], shell=True).decode('utf-8')
     lines = dmesg_output.split('\n')
     line=lines[-2]
     print(line)

@@ -4,7 +4,8 @@ import time
 import subprocess
 import re
 import random
-import path
+import os
+from pathlib import Path
 
 
 def get_current_date():

@@ -7,7 +7,7 @@ import random
 import os
 from pathlib import Path
 
-
+SERIAL_ID = "Arduino_LLC_Arduino_NANO_33_IoT_95FF576E50304D48502E3120FF102841"
 def get_current_date():
     return datetime.datetime.now().strftime("%Y-%m-%d")
 
@@ -60,7 +60,7 @@ def get_serial_port_name_old():
     
     
     
-    SERIAL_ID = "Arduino_LLC_Arduino_NANO_33_IoT_95FF576E50304D48502E3120FF102841"
+    
 
 def get_serial_port_name(serial_id: str = SERIAL_ID) -> str:
     """

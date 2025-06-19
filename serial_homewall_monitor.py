@@ -41,13 +41,13 @@ def extract_last_two_words(phrase):
     return ' '.join(words[-2:]) if len(words) >= 2 else cleaned_phrase
 
 
-def get_serial_port_name_old():
+def get_serial_port_name():
     latest_ttyacm = None
 
     # Run dmesg and filter with grep to get the serial port name attached to 1-1.4
     # Arduino_LLC_Arduino_NANO_33_IoT_95FF576E50304D48502E3120FF102841
 
-    dmesg_output = subprocess.check_output(['dmesg | grep "cdc_acm 1-1.2:1.0:"'], shell=True).decode('utf-8')
+    dmesg_output = subprocess.check_output(['dmesg | grep "cdc_acm 1-1.3:1.0:"'], shell=True).decode('utf-8')
     lines = dmesg_output.split('\n')
     line=lines[-2]
     print(line)
@@ -61,38 +61,7 @@ def get_serial_port_name_old():
     return latest_ttyacm
     
     
-    
-    
-import glob
-import subprocess
-from pathlib import Path
-
-TARGET_ID = "Arduino_LLC_Arduino_NANO_33_IoT_95FF576E50304D48502E3120FF102841"
-
-def get_serial_port_name() -> str:
-    """
-    Find the /dev/tty* path for the board whose ID_SERIAL/ID_SERIAL_SHORT
-    contains TARGET_ID.  Raises FileNotFoundError if not found.
-    """
-    # Collect every CDC-ACM or FTDI-style device currently present.
-    for devnode in glob.glob("/dev/ttyACM*") + glob.glob("/dev/ttyUSB*"):
-        # udevadm prints KEY=VALUE lines; we capture them as text.
-        try:
-            props = subprocess.check_output(
-                ["udevadm", "info", "--name", devnode, "--query=property"],
-                text=True,
-                stderr=subprocess.DEVNULL,   # keep output clean
-            )
-        except subprocess.CalledProcessError:
-            continue  # skip nodes udevadm can’t examine
-
-        # Look for either ID_SERIAL=... or ID_SERIAL_SHORT=...
-        for line in props.splitlines():
-            if line.startswith(("ID_SERIAL=", "ID_SERIAL_SHORT=")) and TARGET_ID in line:
-                return devnode
-
-    raise FileNotFoundError(f"No USB-serial device with ID '{TARGET_ID}' found")
-
+   
 
 # ------------- quick test -------------
 if __name__ == "__main__":

@@ -74,7 +74,7 @@ def get_serial_port_name(serial_id: str = SERIAL_ID) -> str:
     """
     by_id_dir = Path("/dev/serial/by-id")
     if not by_id_dir.exists():
-        raise FileNotFoundError("/dev/serial/by-id does not exist (no USB-serial devices?)")
+        print("/dev/serial/by-id does not exist (no USB-serial devices?)")
 
     for symlink in by_id_dir.iterdir():
         if serial_id in symlink.name:
@@ -82,7 +82,7 @@ def get_serial_port_name(serial_id: str = SERIAL_ID) -> str:
             print(os.path.realpath(symlink))
             return os.path.realpath(symlink)
 
-    raise FileNotFoundError(f"Arduino with ID '{serial_id}' not found")
+    print(f"Arduino with ID '{serial_id}' not found")
 
 # Set the serial port parameters
 baud_rate = 115200  # Change this to your desired baud rate

@@ -79,6 +79,7 @@ def get_serial_port_name(serial_id: str = SERIAL_ID) -> str:
     for symlink in by_id_dir.iterdir():
         if serial_id in symlink.name:
             # Resolve the symlink to get the actual /dev/ttyACM* node
+            print(os.path.realpath(symlink))
             return os.path.realpath(symlink)
 
     raise FileNotFoundError(f"Arduino with ID '{serial_id}' not found")

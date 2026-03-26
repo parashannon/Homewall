@@ -9,7 +9,7 @@ def parse_last_day_climbs():
     line_pattern = re.compile(r"^(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2}) - (.*)$")
     level_pattern = re.compile(r"Level:\s*(\d+)")
 
-    # --- Find last day ---
+    # Find last day
     last_day = None
     for line in reversed(lines):
         m = line_pattern.match(line)
@@ -24,7 +24,7 @@ def parse_last_day_climbs():
     climbs = []
     i = len(lines) - 1
 
-    # --- Walk backwards through last day only ---
+    # Walk backwards through last day only
     while i >= 2:
         m = line_pattern.match(lines[i])
 
@@ -44,12 +44,11 @@ def parse_last_day_climbs():
 
                 if m_name and m_level:
                     name = m_name.group(3).strip()
-
                     level_line = m_level.group(3)
-                    time_of_climb = m_level.group(2)  # <-- extract time here
+                    time_of_climb = m_level.group(2)
 
                     level_match = level_pattern.search(level_line)
-                    level = level_match.group(1) if level_match else "UNKNOWN"
+                    level = level_match.group(1) if level_match else "?"
 
                     climbs.append((name, level, time_of_climb))
 
@@ -63,7 +62,7 @@ def parse_last_day_climbs():
         print("No climbs found.")
     else:
         for name, level, t in climbs:
-            print(f"{name} -> Level {level} @ {t}")
+            print(f"{name[:22]:22}  Level {str(level):>2} @ {t}")
 
 
 if __name__ == "__main__":

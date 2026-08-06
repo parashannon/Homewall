@@ -1,4 +1,0 @@
-:Author: seilers
-:Email:
-:Date: 26/05/2023
-:Revision: version#

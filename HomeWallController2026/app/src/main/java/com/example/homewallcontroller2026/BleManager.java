@@ -20,36 +20,49 @@ import android.util.Log;
 import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
 
-import java.util.UUID;
+import java.nio.charset.StandardCharsets;
 
 public class BleManager {
 
     private static final String TAG = "HomeWallBLE";
 
-    private static final String DEVICE_ADDRESS =
-            BluetoothConstants.DEVICE_ADDRESS;
+    private static final int GATT_ERROR_133 = 133;
+    private static final int GATT_CONN_TIMEOUT = 8;
 
-    public static final UUID SERVICE_UUID =
-            BluetoothConstants.SERVICE_UUID;
+    private static final int MAX_CONNECTION_RETRIES = 2;
+    private static final long RECONNECT_DELAY_MS = 6000L;
+    private static final long OLD_GATT_CLOSE_DELAY_MS = 3000L;
 
     private final Context context;
     private final Handler mainHandler;
     private final Listener listener;
-
     private final BluetoothManager bluetoothManager;
 
     private BluetoothGatt bluetoothGatt;
 
     private BluetoothGattCharacteristic problemCharacteristic;
+    private BluetoothGattCharacteristic ledCharacteristic;
+    private BluetoothGattCharacteristic flipCharacteristic;
+    private BluetoothGattCharacteristic randomCharacteristic;
+    private BluetoothGattCharacteristic arrayCharacteristic;
+    private BluetoothGattCharacteristic stringCharacteristic;
+
+    private boolean isConnected = false;
+    private boolean connectionInProgress = false;
+    private boolean userRequestedDisconnect = false;
+    private int connectionRetryCount = 0;
+
+    private final Runnable reconnectRunnable = new Runnable() {
+        @Override
+        public void run() {
+            connectInternal(true);
+        }
+    };
 
     public interface Listener {
-
         void onStatusChanged(String status);
-
         void onConnected();
-
         void onDisconnected();
-
         void onError(String message);
     }
 
@@ -90,12 +103,43 @@ public class BleManager {
         }
 
         BluetoothAdapter adapter = getBluetoothAdapter();
-
         return adapter != null && adapter.isEnabled();
     }
 
-    @SuppressLint("MissingPermission")
+    public boolean isConnected() {
+        return isConnected
+                && bluetoothGatt != null;
+    }
+
+    /**
+     * Manual connection request from the UI.
+     */
     public void connect() {
+        userRequestedDisconnect = false;
+        cancelPendingReconnect();
+        connectInternal(false);
+    }
+
+    /**
+     * Internal connection path used by manual connects and delayed retries.
+     */
+    @SuppressLint("MissingPermission")
+    private void connectInternal(boolean isRetry) {
+
+        if (userRequestedDisconnect) {
+            return;
+        }
+
+        if (isConnected && bluetoothGatt != null) {
+            reportStatus("HOMEWALL is already connected.");
+            return;
+        }
+
+        if (connectionInProgress) {
+            reportStatus("A Bluetooth connection is already in progress.");
+            return;
+        }
+
         if (!hasConnectPermission()) {
             reportError(
                     "Bluetooth permission has not been granted."
@@ -117,13 +161,11 @@ public class BleManager {
             return;
         }
 
-        closeGatt();
-
-        BluetoothDevice device;
+        final BluetoothDevice device;
 
         try {
             device = adapter.getRemoteDevice(
-                    DEVICE_ADDRESS
+                    BluetoothConstants.DEVICE_ADDRESS
             );
         } catch (IllegalArgumentException exception) {
             Log.e(
@@ -138,113 +180,216 @@ public class BleManager {
             return;
         }
 
-        reportStatus("Connecting to HOMEWALL...");
+        boolean hadExistingGatt = bluetoothGatt != null;
 
-        bluetoothGatt = device.connectGatt(
-                context,
-                false,
-                gattCallback,
-                BluetoothDevice.TRANSPORT_LE
-        );
+        if (hadExistingGatt) {
+            reportStatus("Closing stale Bluetooth connection...");
+            closeGattOnly();
+        }
+
+        connectionInProgress = true;
+
+        Runnable connectAction = () -> {
+
+            if (userRequestedDisconnect) {
+                connectionInProgress = false;
+                return;
+            }
+
+            if (!hasConnectPermission()) {
+                connectionInProgress = false;
+                reportError("Bluetooth permission is missing.");
+                return;
+            }
+
+            reportStatus(
+                    isRetry
+                            ? "Retrying HOMEWALL connection..."
+                            : "Connecting to HOMEWALL..."
+            );
+
+            try {
+                BluetoothGatt newGatt = device.connectGatt(
+                        context,
+                        false,
+                        gattCallback
+                );
+
+                if (newGatt == null) {
+                    connectionInProgress = false;
+                    reportError(
+                            "Android could not create a GATT connection."
+                    );
+                    return;
+                }
+
+                bluetoothGatt = newGatt;
+
+            } catch (SecurityException exception) {
+                connectionInProgress = false;
+
+                Log.e(
+                        TAG,
+                        "Bluetooth security exception",
+                        exception
+                );
+
+                reportError(
+                        "Bluetooth permission was denied."
+                );
+            }
+        };
+
+        if (hadExistingGatt) {
+            mainHandler.postDelayed(
+                    connectAction,
+                    OLD_GATT_CLOSE_DELAY_MS
+            );
+        } else {
+            connectAction.run();
+        }
     }
 
     @SuppressLint("MissingPermission")
     public void disconnect() {
-        if (!hasConnectPermission()) {
-            return;
-        }
 
-        if (bluetoothGatt != null) {
+        userRequestedDisconnect = true;
+        cancelPendingReconnect();
+
+        connectionInProgress = false;
+        connectionRetryCount = 0;
+        isConnected = false;
+
+        BluetoothGatt gatt = bluetoothGatt;
+        clearCharacteristicReferences();
+        bluetoothGatt = null;
+
+        if (gatt != null) {
             reportStatus("Disconnecting...");
-            bluetoothGatt.disconnect();
+            safeCloseGatt(gatt);
+        } else {
+            reportStatus("Disconnected");
+            mainHandler.post(listener::onDisconnected);
         }
     }
 
     public void close() {
-        closeGatt();
+
+        userRequestedDisconnect = true;
+        cancelPendingReconnect();
+
+        connectionInProgress = false;
+        connectionRetryCount = 0;
+        isConnected = false;
+
+        closeGattOnly();
     }
 
-    private BluetoothAdapter getBluetoothAdapter() {
-        if (bluetoothManager == null) {
-            return null;
-        }
-
-        return bluetoothManager.getAdapter();
+    public void sendProblemNumber(int value) {
+        writeInt(
+                problemCharacteristic,
+                value,
+                "problem"
+        );
     }
 
-    @SuppressLint("MissingPermission")
-    private void closeGatt() {
-        if (bluetoothGatt == null) {
+    public void sendLedValue(int value) {
+        writeInt(
+                ledCharacteristic,
+                value,
+                "hold"
+        );
+    }
+
+    public void sendFlip() {
+        writeInt(
+                flipCharacteristic,
+                1,
+                "flip"
+        );
+    }
+
+    public void sendRandomValue(int value) {
+        writeInt(
+                randomCharacteristic,
+                value,
+                "random"
+        );
+    }
+
+    public void sendString(String value) {
+
+        if (value == null) {
+            reportError("Cannot send a null string.");
             return;
         }
 
-        if (hasConnectPermission()) {
-            bluetoothGatt.disconnect();
-            bluetoothGatt.close();
-        }
-
-        bluetoothGatt = null;
-        problemCharacteristic = null;
+        writeBytes(
+                stringCharacteristic,
+                value.getBytes(StandardCharsets.UTF_8),
+                "string"
+        );
     }
 
-    /**
-     * Sends a route/problem number through characteristic 0x0001.
-     *
-     * This matches the original app's four-byte little-endian
-     * integer format.
-     */
+    private void writeInt(
+            BluetoothGattCharacteristic characteristic,
+            int value,
+            String description
+    ) {
+
+        byte[] bytes = new byte[4];
+
+        bytes[0] = (byte) (value & 0xFF);
+        bytes[1] = (byte) ((value >> 8) & 0xFF);
+        bytes[2] = (byte) ((value >> 16) & 0xFF);
+        bytes[3] = (byte) ((value >> 24) & 0xFF);
+
+        writeBytes(
+                characteristic,
+                bytes,
+                description
+        );
+    }
+
     @SuppressLint("MissingPermission")
-    public void sendProblemNumber(int problemNumber) {
+    private void writeBytes(
+            BluetoothGattCharacteristic characteristic,
+            byte[] value,
+            String description
+    ) {
+
         if (!hasConnectPermission()) {
+            reportError("Bluetooth permission is missing.");
+            return;
+        }
+
+        if (!isConnected || bluetoothGatt == null) {
+            reportError("HOMEWALL is not connected.");
+            return;
+        }
+
+        if (characteristic == null) {
             reportError(
-                    "Bluetooth permission is missing."
+                    description
+                            + " characteristic is unavailable."
             );
             return;
         }
 
-        if (bluetoothGatt == null) {
-            reportError(
-                    "HOMEWALL is not connected."
-            );
-            return;
-        }
-
-        if (problemCharacteristic == null) {
-            reportError(
-                    "Problem characteristic is not available."
-            );
-            return;
-        }
-
-        byte[] value = new byte[4];
-
-        value[0] =
-                (byte) (problemNumber & 0xFF);
-
-        value[1] =
-                (byte) ((problemNumber >> 8) & 0xFF);
-
-        value[2] =
-                (byte) ((problemNumber >> 16) & 0xFF);
-
-        value[3] =
-                (byte) ((problemNumber >> 24) & 0xFF);
-
-        problemCharacteristic.setWriteType(
+        characteristic.setWriteType(
                 BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT
         );
 
-        reportStatus(
-                "Sending problem " + problemNumber + "..."
-        );
+        reportStatus("Sending " + description + "...");
 
         if (
                 Build.VERSION.SDK_INT
                         >= Build.VERSION_CODES.TIRAMISU
         ) {
+
             int result =
                     bluetoothGatt.writeCharacteristic(
-                            problemCharacteristic,
+                            characteristic,
                             value,
                             BluetoothGattCharacteristic
                                     .WRITE_TYPE_DEFAULT
@@ -256,23 +401,27 @@ public class BleManager {
                             .BluetoothStatusCodes.SUCCESS
             ) {
                 reportError(
-                        "Could not start problem write. "
-                                + "Result: "
+                        "Could not start "
+                                + description
+                                + " write. Result: "
                                 + result
                 );
             }
 
         } else {
-            problemCharacteristic.setValue(value);
+
+            characteristic.setValue(value);
 
             boolean started =
                     bluetoothGatt.writeCharacteristic(
-                            problemCharacteristic
+                            characteristic
                     );
 
             if (!started) {
                 reportError(
-                        "Could not start problem write."
+                        "Could not start "
+                                + description
+                                + " write."
                 );
             }
         }
@@ -287,6 +436,7 @@ public class BleManager {
                         int status,
                         int newState
                 ) {
+
                     Log.d(
                             TAG,
                             "onConnectionStateChange: status="
@@ -295,32 +445,83 @@ public class BleManager {
                                     + newState
                     );
 
-                    if (
-                            status
-                                    != BluetoothGatt.GATT_SUCCESS
-                    ) {
-                        String message =
-                                "Bluetooth connection error: "
-                                        + status;
+                    if (status != BluetoothGatt.GATT_SUCCESS) {
 
-                        Log.e(TAG, message);
+                        connectionInProgress = false;
+                        isConnected = false;
 
-                        gatt.close();
+                        safeCloseGatt(gatt);
 
                         if (bluetoothGatt == gatt) {
                             bluetoothGatt = null;
-                            problemCharacteristic = null;
+                            clearCharacteristicReferences();
                         }
 
-                        reportError(message);
+                        boolean retryable =
+                                status == GATT_ERROR_133
+                                        || status == GATT_CONN_TIMEOUT;
+
+                        if (
+                                retryable
+                                        && !userRequestedDisconnect
+                                        && connectionRetryCount
+                                        < MAX_CONNECTION_RETRIES
+                        ) {
+                            connectionRetryCount++;
+
+                            reportStatus(
+                                    "Bluetooth error "
+                                            + status
+                                            + "; retrying "
+                                            + connectionRetryCount
+                                            + "/"
+                                            + MAX_CONNECTION_RETRIES
+                                            + "..."
+                            );
+
+                            scheduleReconnect();
+
+                        } else {
+
+                            int retriesUsed =
+                                    connectionRetryCount;
+
+                            connectionRetryCount = 0;
+
+                            String message =
+                                    "Bluetooth connection error: "
+                                            + status;
+
+                            if (
+                                    retryable
+                                            && retriesUsed
+                                            >= MAX_CONNECTION_RETRIES
+                            ) {
+                                message +=
+                                        " after "
+                                                + retriesUsed
+                                                + " retries";
+                            }
+
+                            reportError(message);
+                        }
+
                         return;
                     }
 
                     if (
                             newState
-                                    == BluetoothProfile
-                                    .STATE_CONNECTED
+                                    == BluetoothProfile.STATE_CONNECTED
                     ) {
+
+                        cancelPendingReconnect();
+
+                        connectionInProgress = false;
+                        isConnected = true;
+                        connectionRetryCount = 0;
+
+                        bluetoothGatt = gatt;
+
                         reportStatus(
                                 "Connected; discovering services..."
                         );
@@ -329,14 +530,20 @@ public class BleManager {
 
                     } else if (
                             newState
-                                    == BluetoothProfile
-                                    .STATE_DISCONNECTED
+                                    == BluetoothProfile.STATE_DISCONNECTED
                     ) {
-                        gatt.close();
+
+                        cancelPendingReconnect();
+
+                        connectionInProgress = false;
+                        isConnected = false;
+                        connectionRetryCount = 0;
+
+                        safeCloseGatt(gatt);
 
                         if (bluetoothGatt == gatt) {
                             bluetoothGatt = null;
-                            problemCharacteristic = null;
+                            clearCharacteristicReferences();
                         }
 
                         reportStatus("Disconnected");
@@ -352,6 +559,7 @@ public class BleManager {
                         @NonNull BluetoothGatt gatt,
                         int status
                 ) {
+
                     Log.d(
                             TAG,
                             "onServicesDiscovered: status="
@@ -371,7 +579,7 @@ public class BleManager {
 
                     BluetoothGattService homeWallService =
                             gatt.getService(
-                                    SERVICE_UUID
+                                    BluetoothConstants.SERVICE_UUID
                             );
 
                     if (homeWallService == null) {
@@ -382,29 +590,34 @@ public class BleManager {
                         return;
                     }
 
-                    Log.d(
-                            TAG,
-                            "HOMEWALL characteristics:"
-                    );
-
-                    for (
-                            BluetoothGattCharacteristic characteristic
-                            : homeWallService.getCharacteristics()
-                    ) {
-                        Log.d(
-                                TAG,
-                                "Characteristic UUID: "
-                                        + characteristic.getUuid()
-                                        + ", properties: "
-                                        + characteristic
-                                        .getProperties()
-                        );
-                    }
-
                     problemCharacteristic =
                             homeWallService.getCharacteristic(
-                                    BluetoothConstants
-                                            .PROBLEM_UUID
+                                    BluetoothConstants.PROBLEM_UUID
+                            );
+
+                    ledCharacteristic =
+                            homeWallService.getCharacteristic(
+                                    BluetoothConstants.LED_UUID
+                            );
+
+                    flipCharacteristic =
+                            homeWallService.getCharacteristic(
+                                    BluetoothConstants.FLIP_UUID
+                            );
+
+                    randomCharacteristic =
+                            homeWallService.getCharacteristic(
+                                    BluetoothConstants.RANDOM_UUID
+                            );
+
+                    arrayCharacteristic =
+                            homeWallService.getCharacteristic(
+                                    BluetoothConstants.ARRAY_UUID
+                            );
+
+                    stringCharacteristic =
+                            homeWallService.getCharacteristic(
+                                    BluetoothConstants.STRING_UUID
                             );
 
                     if (problemCharacteristic == null) {
@@ -430,6 +643,7 @@ public class BleManager {
                         @NonNull BluetoothGattCharacteristic characteristic,
                         int status
                 ) {
+
                     Log.d(
                             TAG,
                             "onCharacteristicWrite: UUID="
@@ -439,34 +653,39 @@ public class BleManager {
                     );
 
                     if (
-                            characteristic
-                                    .getUuid()
-                                    .equals(
-                                            BluetoothConstants
-                                                    .PROBLEM_UUID
-                                    )
+                            status
+                                    == BluetoothGatt.GATT_SUCCESS
                     ) {
-                        if (
-                                status
-                                        == BluetoothGatt.GATT_SUCCESS
-                        ) {
-                            reportStatus(
-                                    "Problem sent successfully"
-                            );
-                        } else {
-                            reportError(
-                                    "Problem write failed: "
-                                            + status
-                            );
-                        }
+                        reportStatus("Command sent");
+                    } else {
+                        reportError(
+                                "Bluetooth write failed: "
+                                        + status
+                        );
                     }
                 }
             };
+
+    private void scheduleReconnect() {
+        cancelPendingReconnect();
+
+        mainHandler.postDelayed(
+                reconnectRunnable,
+                RECONNECT_DELAY_MS
+        );
+    }
+
+    private void cancelPendingReconnect() {
+        mainHandler.removeCallbacks(
+                reconnectRunnable
+        );
+    }
 
     @SuppressLint("MissingPermission")
     private void discoverServices(
             BluetoothGatt gatt
     ) {
+
         if (!hasConnectPermission()) {
             reportError(
                     "Bluetooth permission was lost before "
@@ -480,15 +699,79 @@ public class BleManager {
 
         if (!started) {
             reportError(
-                    "Android could not start "
-                            + "service discovery."
+                    "Android could not start service discovery."
             );
         }
+    }
+
+    private BluetoothAdapter getBluetoothAdapter() {
+
+        if (bluetoothManager == null) {
+            return null;
+        }
+
+        return bluetoothManager.getAdapter();
+    }
+
+    private void closeGattOnly() {
+
+        BluetoothGatt gatt = bluetoothGatt;
+
+        bluetoothGatt = null;
+        isConnected = false;
+        clearCharacteristicReferences();
+
+        if (gatt != null) {
+            safeCloseGatt(gatt);
+        }
+    }
+
+    @SuppressLint("MissingPermission")
+    private void safeCloseGatt(
+            BluetoothGatt gatt
+    ) {
+
+        if (gatt == null) {
+            return;
+        }
+
+        try {
+            if (hasConnectPermission()) {
+                gatt.disconnect();
+            }
+        } catch (Exception exception) {
+            Log.w(
+                    TAG,
+                    "Exception while disconnecting GATT",
+                    exception
+            );
+        }
+
+        try {
+            gatt.close();
+        } catch (Exception exception) {
+            Log.w(
+                    TAG,
+                    "Exception while closing GATT",
+                    exception
+            );
+        }
+    }
+
+    private void clearCharacteristicReferences() {
+
+        problemCharacteristic = null;
+        ledCharacteristic = null;
+        flipCharacteristic = null;
+        randomCharacteristic = null;
+        arrayCharacteristic = null;
+        stringCharacteristic = null;
     }
 
     private void reportStatus(
             String status
     ) {
+
         Log.d(TAG, status);
 
         mainHandler.post(
@@ -502,6 +785,7 @@ public class BleManager {
     private void reportError(
             String message
     ) {
+
         Log.e(TAG, message);
 
         mainHandler.post(

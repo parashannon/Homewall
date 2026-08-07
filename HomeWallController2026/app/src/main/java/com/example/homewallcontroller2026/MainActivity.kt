@@ -22,6 +22,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -49,6 +51,7 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -635,15 +638,16 @@ class MainActivity : ComponentActivity() {
                                 items(recentClimbs) { climb ->
 
                                     Button(
-                                        modifier =
-                                        Modifier.fillMaxHeight(),
+                                        modifier = Modifier
+                                            .width(72.dp)
+                                            .fillMaxHeight(),
                                         shape =
-                                        RoundedCornerShape(
-                                            6.dp
-                                        ),
+                                        RoundedCornerShape(5.dp),
                                         contentPadding =
-                                        ButtonDefaults
-                                            .ContentPadding,
+                                        PaddingValues(
+                                            horizontal = 3.dp,
+                                            vertical = 2.dp
+                                        ),
                                         onClick = {
                                             bleManager.sendString(
                                                 ":Q${climb.name}"
@@ -656,21 +660,33 @@ class MainActivity : ComponentActivity() {
                                         }
                                     ) {
                                         Column(
+                                            modifier =
+                                            Modifier.fillMaxWidth(),
                                             horizontalAlignment =
                                             Alignment
-                                                .CenterHorizontally
+                                                .CenterHorizontally,
+                                            verticalArrangement =
+                                            Arrangement.Center
                                         ) {
                                             Text(
                                                 text =
                                                 "L${climb.level}",
-                                                fontSize = 10.sp
-                                            )
-                                            Text(
-                                                text = climb.name,
                                                 fontSize = 9.sp,
-                                                maxLines = 2,
+                                                lineHeight = 9.sp,
+                                                maxLines = 1
+                                            )
+
+                                            Text(
+                                                modifier =
+                                                Modifier.fillMaxWidth(),
+                                                text = climb.name,
+                                                fontSize = 8.sp,
+                                                lineHeight = 9.sp,
+                                                maxLines = 3,
                                                 textAlign =
-                                                TextAlign.Center
+                                                TextAlign.Center,
+                                                overflow =
+                                                TextOverflow.Ellipsis
                                             )
                                         }
                                     }

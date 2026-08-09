@@ -14,7 +14,7 @@ compile on pc
 upload binary
  ps -aux | grep python
 to kill process
-use sh script to load onto arduino
+use sh script to load onto arduino, use chmod +x on sh script if required
 from sketch directory
 restart serial monitor with nohup python3 http_serial_homewall_monitor.py &
 

@@ -4,6 +4,13 @@ The serial monitor looks for this and returns the ttyamc port
 use  nohup python3 http_serial_homewall_monitor.py &
 use tail -f all_homewall_serial_output.txt
 
+bluetooth code, is, I think Home_Wall_v8_BluetoothOnly
+
+from sketch directory
+arduino-cli compile --fqbn arduino:samd:nano_33_iot /home/pi/HomeWall
+
+Git Hub paramail sdeilers / git--  << doesn't work?
+
 HOMEWALL CONTROL INTERFACE
 QUICK COMMAND REFERENCE
 ===============================================================================

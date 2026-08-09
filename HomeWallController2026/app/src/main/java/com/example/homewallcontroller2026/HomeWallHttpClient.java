@@ -23,7 +23,7 @@ public class HomeWallHttpClient {
     private static final String TAG = "HomeWallHTTP";
 
     private static final String RECENT_CLIMBS_URL =
-            "http://192.168.4.46:8080/api/recent-climbs?limit=30";
+            "http://192.168.4.46:8080/api/recent-climbs?limit=100";
 
     private final ExecutorService executor =
             Executors.newSingleThreadExecutor();

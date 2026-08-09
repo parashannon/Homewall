@@ -1,0 +1,23 @@
+{
+  "cpu": {
+    "fqbn": "arduino:samd:nano_33_iot",
+    "name": "HomeWallNano - Arduino NANO 33 IoT",
+    "type": "cloud"
+  },
+  "secrets": [
+    {
+      "name": "SECRET_OPTIONAL_PASS",
+      "value": ""
+    },
+    {
+      "name": "SECRET_SSID",
+      "value": ""
+    }
+  ],
+  "included_libs": [
+    {
+      "name": "FastLED",
+      "version": "3.10.0"
+    }
+  ]
+}

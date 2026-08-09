@@ -24,7 +24,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
@@ -56,11 +56,17 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
 
     private lateinit var bleManager: BleManager
     private lateinit var homeWallHttpClient: HomeWallHttpClient
+
+    private var recentClimbRefreshJob: Job? = null
 
     private var connectionStatus by mutableStateOf(
         "Starting Bluetooth..."
@@ -331,12 +337,14 @@ class MainActivity : ComponentActivity() {
                         ) {
 
                             CompactButton(
-                                text = "RANDOM",
+                                text = "PRESET RANDOM",
                                 onClick = {
                                     bleManager
                                         .sendRandomValue(
                                             randomLevel * 10
                                         )
+
+                                    scheduleRecentClimbsRefresh()
                                 }
                             )
 
@@ -347,6 +355,8 @@ class MainActivity : ComponentActivity() {
                                         .sendRandomValue(
                                             randomLevel * 10 - 3
                                         )
+
+                                    scheduleRecentClimbsRefresh()
                                 }
                             )
 
@@ -383,7 +393,7 @@ class MainActivity : ComponentActivity() {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(48.dp),
+                            .height(54.dp),
                         horizontalArrangement =
                         Arrangement.spacedBy(4.dp),
                         verticalAlignment =
@@ -462,120 +472,222 @@ class MainActivity : ComponentActivity() {
                     Spacer(Modifier.height(3.dp))
 
                     /*
-                     * Middle wall image and 16 x 11 clickable grid.
+                     * Main content: wall/grid on the left, recent climbs
+                     * stacked vertically in a narrow panel on the right.
                      */
-                    Card(
+                    Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .weight(0.61f)
+                            .weight(0.81f),
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
-                        Box(
-                            modifier = Modifier.fillMaxSize(),
-                            contentAlignment = Alignment.Center
+
+                        Card(
+                            modifier = Modifier
+                                .weight(0.73f)
+                                .fillMaxHeight()
                         ) {
-                            /*
-                             * The original wall image was laid out at
-                             * 571 x 880 dp. The image and the clickable
-                             * grid must occupy this exact same aspect ratio.
-                             * Otherwise ContentScale.Fit letterboxes the image
-                             * while the grid stretches across the whole card.
-                             */
                             Box(
-                                modifier = Modifier
-                                    .fillMaxHeight()
-                                    .aspectRatio(
-                                        ratio = 571f / 880f,
-                                        matchHeightConstraintsFirst = true
-                                    )
+                                modifier = Modifier.fillMaxSize(),
+                                contentAlignment = Alignment.Center
                             ) {
-                                if (imageResource != 0) {
-                                    Image(
-                                        modifier = Modifier.fillMaxSize(),
-                                        painter = painterResource(
-                                            imageResource
-                                        ),
-                                        contentDescription = "HomeWall",
-                                        contentScale = ContentScale.FillBounds
-                                    )
-                                } else {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxHeight(0.90f)
+                                        .aspectRatio(
+                                            ratio = 571f / 880f,
+                                            matchHeightConstraintsFirst = true
+                                        )
+                                ) {
+                                    if (imageResource != 0) {
+                                        Image(
+                                            modifier = Modifier.fillMaxSize(),
+                                            painter = painterResource(imageResource),
+                                            contentDescription = "HomeWall",
+                                            contentScale = ContentScale.FillBounds
+                                        )
+                                    } else {
+                                        Text(
+                                            modifier = Modifier
+                                                .align(Alignment.Center)
+                                                .padding(12.dp),
+                                            text =
+                                            "Add home_wall_cropped_small_update.png\n" +
+                                                    "or homewall.png to res/drawable",
+                                            textAlign = TextAlign.Center
+                                        )
+                                    }
+
+                                    Column(
+                                        modifier = Modifier.fillMaxSize()
+                                    ) {
+                                        for (displayRow in 0 until 16) {
+                                            Row(
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .weight(1f)
+                                            ) {
+                                                for (column in 1..11) {
+                                                    val row = 16 - displayRow
+                                                    val holdLabel =
+                                                        "%d%02d".format(row, column)
+                                                    val holdValue = holdLabel.toInt()
+                                                    val isSelected =
+                                                        selectedHolds.contains(holdValue)
+
+                                                    Box(
+                                                        modifier = Modifier
+                                                            .weight(1f)
+                                                            .fillMaxHeight()
+                                                            .background(
+                                                                if (isSelected) {
+                                                                    Color(0x5533FF33)
+                                                                } else {
+                                                                    Color(0x220000FF)
+                                                                }
+                                                            )
+                                                            .clickable {
+                                                                if (isSelected) {
+                                                                    selectedHolds.remove(holdValue)
+                                                                } else {
+                                                                    selectedHolds.add(holdValue)
+                                                                }
+
+                                                                bleManager.sendLedValue(
+                                                                    holdValue
+                                                                )
+                                                            },
+                                                        contentAlignment =
+                                                        Alignment.Center
+                                                    ) {
+                                                        Text(
+                                                            text = holdLabel,
+                                                            color = Color.White,
+                                                            fontSize = 8.4.sp,
+                                                            maxLines = 1
+                                                        )
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        /*
+                         * Recent climbs on the right. Newest climb is at
+                         * the top; the list scrolls vertically.
+                         */
+                        Card(
+                            modifier = Modifier
+                                .weight(0.27f)
+                                .fillMaxHeight()
+                        ) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(3.dp)
+                            ) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
                                     Text(
-                                        modifier = Modifier
-                                            .align(Alignment.Center)
-                                            .padding(12.dp),
-                                        text =
-                                        "Add home_wall_cropped_small_update.png\n" +
-                                                "or homewall.png to res/drawable",
-                                        textAlign = TextAlign.Center
+                                        modifier = Modifier.weight(1f),
+                                        text = "Recent",
+                                        fontSize = 12.sp,
+                                        maxLines = 1
                                     )
+
+                                    Button(
+                                        modifier = Modifier.height(28.dp),
+                                        contentPadding = PaddingValues(
+                                            horizontal = 5.dp,
+                                            vertical = 0.dp
+                                        ),
+                                        onClick = { loadRecentClimbs() }
+                                    ) {
+                                        Text(
+                                            text = "↻",
+                                            fontSize = 12.sp,
+                                            maxLines = 1
+                                        )
+                                    }
                                 }
 
-                                Column(
-                                    modifier = Modifier.fillMaxSize()
+                                Text(
+                                    text = recentClimbStatus,
+                                    fontSize = 9.sp,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+
+                                Spacer(Modifier.height(2.dp))
+
+                                LazyColumn(
+                                    modifier = Modifier.fillMaxSize(),
+                                    verticalArrangement =
+                                    Arrangement.spacedBy(3.dp)
                                 ) {
-                                    for (displayRow in 0 until 16) {
-                                        Row(
+                                    items(recentClimbs) { climb ->
+                                        val climbColor =
+                                            difficultyColor(climb.level)
+                                        val climbTextColor =
+                                            difficultyTextColor(climb.level)
+
+                                        Button(
                                             modifier = Modifier
                                                 .fillMaxWidth()
-                                                .weight(1f)
+                                                .height(48.dp),
+                                            shape = RoundedCornerShape(5.dp),
+                                            contentPadding = PaddingValues(
+                                                horizontal = 4.dp,
+                                                vertical = 2.dp
+                                            ),
+                                            colors = ButtonDefaults.buttonColors(
+                                                containerColor = climbColor,
+                                                contentColor = climbTextColor
+                                            ),
+                                            onClick = {
+                                                bleManager.sendString(
+                                                    ":Q${climb.name}"
+                                                )
+
+                                                recentClimbStatus =
+                                                    "DB set: " +
+                                                            "L${climb.level} " +
+                                                            climb.name
+                                            }
                                         ) {
-                                            for (column in 1..11) {
-                                                // Physical row 16 is at the top;
-                                                // physical row 1 is at the bottom.
-                                                val row = 16 - displayRow
+                                            Column(
+                                                modifier = Modifier.fillMaxWidth(),
+                                                horizontalAlignment =
+                                                Alignment.CenterHorizontally,
+                                                verticalArrangement =
+                                                Arrangement.Center
+                                            ) {
+                                                Text(
+                                                    text =
+                                                    "L${climb.level}  " +
+                                                            formatClimbTimestamp(
+                                                                climb.timestamp
+                                                            ),
+                                                    fontSize = 9.sp,
+                                                    lineHeight = 10.sp,
+                                                    maxLines = 1
+                                                )
 
-                                                // Explicit formatting gives:
-                                                // 101, 102 ... 111;
-                                                // 201, 202 ... 211; etc.
-                                                val holdLabel =
-                                                    "%d%02d".format(
-                                                        row,
-                                                        column
-                                                    )
-
-                                                val holdValue =
-                                                    holdLabel.toInt()
-
-                                                val isSelected =
-                                                    selectedHolds.contains(
-                                                        holdValue
-                                                    )
-
-                                                Box(
-                                                    modifier = Modifier
-                                                        .weight(1f)
-                                                        .fillMaxHeight()
-                                                        .background(
-                                                            if (isSelected) {
-                                                                Color(0x5533FF33)
-                                                            } else {
-                                                                Color(0x220000FF)
-                                                            }
-                                                        )
-                                                        .clickable {
-                                                            if (isSelected) {
-                                                                selectedHolds.remove(
-                                                                    holdValue
-                                                                )
-                                                            } else {
-                                                                selectedHolds.add(
-                                                                    holdValue
-                                                                )
-                                                            }
-
-                                                            bleManager.sendLedValue(
-                                                                holdValue
-                                                            )
-                                                        },
-                                                    contentAlignment =
-                                                    Alignment.Center
-                                                ) {
-                                                    Text(
-                                                        text = holdLabel,
-                                                        color = Color.White,
-                                                        fontSize = 7.sp,
-                                                        maxLines = 1
-                                                    )
-                                                }
+                                                Text(
+                                                    modifier =
+                                                    Modifier.fillMaxWidth(),
+                                                    text = climb.name,
+                                                    fontSize = 11.sp,
+                                                    lineHeight = 12.sp,
+                                                    maxLines = 2,
+                                                    textAlign = TextAlign.Center,
+                                                    overflow = TextOverflow.Ellipsis
+                                                )
                                             }
                                         }
                                     }
@@ -586,119 +698,79 @@ class MainActivity : ComponentActivity() {
 
                     Spacer(Modifier.height(3.dp))
 
-                    /*
-                     * Bottom recent-climb HTTP panel.
-                     */
-                    Card(
+                    Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .weight(0.20f)
+                            .height(26.dp),
+                        horizontalArrangement =
+                        Arrangement.spacedBy(4.dp),
+                        verticalAlignment =
+                        Alignment.CenterVertically
                     ) {
-                        Column(
+                        Button(
                             modifier = Modifier
-                                .fillMaxSize()
-                                .padding(4.dp)
+                                .width(112.dp)
+                                .fillMaxHeight(),
+                            contentPadding = PaddingValues(
+                                horizontal = 4.dp,
+                                vertical = 0.dp
+                            ),
+                            shape = RoundedCornerShape(4.dp),
+                            onClick = {
+                                bleManager.sendString(":D")
+                            }
                         ) {
+                            Text(
+                                text = "SHOW DIFFICULTY",
+                                fontSize = 8.sp,
+                                maxLines = 1
+                            )
+                        }
 
-                            Row(
-                                modifier =
-                                Modifier.fillMaxWidth(),
-                                verticalAlignment =
-                                Alignment.CenterVertically
-                            ) {
-
-                                Text(
-                                    modifier =
-                                    Modifier.weight(1f),
-                                    text =
-                                    "Recent climbs — " +
-                                            recentClimbStatus,
-                                    fontSize = 10.sp,
-                                    maxLines = 1
-                                )
-
-                                CompactButton(
-                                    modifier =
-                                    Modifier.weight(0.32f),
-                                    text = "REFRESH",
-                                    onClick = {
-                                        loadRecentClimbs()
-                                    }
-                                )
+                        Button(
+                            modifier = Modifier
+                                .width(70.dp)
+                                .fillMaxHeight(),
+                            contentPadding = PaddingValues(
+                                horizontal = 4.dp,
+                                vertical = 0.dp
+                            ),
+                            shape = RoundedCornerShape(4.dp),
+                            onClick = {
+                                bleManager.sendString(":W")
                             }
-
-                            Spacer(Modifier.height(2.dp))
-
-                            LazyRow(
-                                modifier =
-                                Modifier.fillMaxSize(),
-                                horizontalArrangement =
-                                Arrangement.spacedBy(4.dp)
-                            ) {
-                                items(recentClimbs) { climb ->
-
-                                    Button(
-                                        modifier = Modifier
-                                            .width(72.dp)
-                                            .fillMaxHeight(),
-                                        shape =
-                                        RoundedCornerShape(5.dp),
-                                        contentPadding =
-                                        PaddingValues(
-                                            horizontal = 3.dp,
-                                            vertical = 2.dp
-                                        ),
-                                        onClick = {
-                                            bleManager.sendString(
-                                                ":Q${climb.name}"
-                                            )
-
-                                            recentClimbStatus =
-                                                "DB set: " +
-                                                        "L${climb.level} " +
-                                                        climb.name
-                                        }
-                                    ) {
-                                        Column(
-                                            modifier =
-                                            Modifier.fillMaxWidth(),
-                                            horizontalAlignment =
-                                            Alignment
-                                                .CenterHorizontally,
-                                            verticalArrangement =
-                                            Arrangement.Center
-                                        ) {
-                                            Text(
-                                                text =
-                                                "L${climb.level}",
-                                                fontSize = 9.sp,
-                                                lineHeight = 9.sp,
-                                                maxLines = 1
-                                            )
-
-                                            Text(
-                                                modifier =
-                                                Modifier.fillMaxWidth(),
-                                                text = climb.name,
-                                                fontSize = 8.sp,
-                                                lineHeight = 9.sp,
-                                                maxLines = 3,
-                                                textAlign =
-                                                TextAlign.Center,
-                                                overflow =
-                                                TextOverflow.Ellipsis
-                                            )
-                                        }
-                                    }
-                                }
-                            }
+                        ) {
+                            Text(
+                                text = "WHITE",
+                                fontSize = 8.sp,
+                                maxLines = 1
+                            )
                         }
                     }
+
                 }
             }
         }
 
         tryToConnect()
+    }
+
+    /*
+     * Refresh the recent-climb list 5 seconds after a random command.
+     * If RANDOM or GEN RANDOM is pressed again before the delay expires,
+     * the old refresh is canceled and the 5-second timer starts over.
+     */
+    private fun scheduleRecentClimbsRefresh() {
+        recentClimbRefreshJob?.cancel()
+
+        recentClimbStatus =
+            "Waiting for random climb..."
+
+        recentClimbRefreshJob =
+            lifecycleScope.launch {
+                delay(5000L)
+                loadRecentClimbs()
+            }
     }
 
     private fun loadRecentClimbs() {
@@ -752,6 +824,8 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun onDestroy() {
+
+        recentClimbRefreshJob?.cancel()
 
         if (::bleManager.isInitialized) {
             bleManager.close()
@@ -880,6 +954,77 @@ class MainActivity : ComponentActivity() {
                 "$number $name"
             }
         }
+    }
+}
+
+/*
+ * Recent-climb difficulty colors.
+ * Anchor levels: 1 green, 3 yellow, 5 orange,
+ * 7 red, 9 purple, 10 blue. Intermediate levels are blended.
+ */
+private fun difficultyColor(level: Int): Color {
+    val clamped = level.coerceIn(1, 10)
+
+    val anchors = listOf(
+        1 to Color(0xFF2EAD4A),
+        3 to Color(0xFFF2D13D),
+        5 to Color(0xFFF28C28),
+        7 to Color(0xFFD93B36),
+        9 to Color(0xFF7B3FB2),
+        10 to Color(0xFF2D62D6)
+    )
+
+    for (index in 0 until anchors.size - 1) {
+        val (startLevel, startColor) = anchors[index]
+        val (endLevel, endColor) = anchors[index + 1]
+
+        if (clamped in startLevel..endLevel) {
+            val fraction =
+                (clamped - startLevel).toFloat() /
+                        (endLevel - startLevel).toFloat()
+
+            return blendColor(startColor, endColor, fraction)
+        }
+    }
+
+    return anchors.last().second
+}
+
+private fun blendColor(
+    start: Color,
+    end: Color,
+    fraction: Float
+): Color {
+    val t = fraction.coerceIn(0f, 1f)
+
+    return Color(
+        red = start.red + (end.red - start.red) * t,
+        green = start.green + (end.green - start.green) * t,
+        blue = start.blue + (end.blue - start.blue) * t,
+        alpha = start.alpha + (end.alpha - start.alpha) * t
+    )
+}
+
+private fun difficultyTextColor(level: Int): Color {
+    return if (level <= 5) Color(0xFF111111) else Color.White
+}
+
+/*
+ * Pi timestamps arrive as YYYY-MM-DD HH:MM:SS.
+ * Display them compactly as MM/DD HH:MM.
+ */
+private fun formatClimbTimestamp(timestamp: String): String {
+    return try {
+        if (timestamp.length >= 16) {
+            val month = timestamp.substring(5, 7)
+            val day = timestamp.substring(8, 10)
+            val time = timestamp.substring(11, 16)
+            "$month/$day $time"
+        } else {
+            timestamp
+        }
+    } catch (_: Exception) {
+        timestamp
     }
 }
 

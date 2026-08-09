@@ -1,13 +1,22 @@
 The main arduino is cdc_acm 1-1.1:1.0
 The serial monitor looks for this and returns the ttyamc port
 
-use  nohup python3 http_serial_homewall_monitor.py &
+use  
+nohup python3 http_serial_homewall_monitor.py &
 use tail -f all_homewall_serial_output.txt
 
 bluetooth code, is, I think Home_Wall_v8_BluetoothOnly
 
+
+change on cloud
+download selection
+compile on pc
+upload binary
+ ps -aux | grep python
+to kill process
+use sh script to load onto arduino
 from sketch directory
-arduino-cli compile --fqbn arduino:samd:nano_33_iot /home/pi/HomeWall
+restart serial monitor with nohup python3 http_serial_homewall_monitor.py &
 
 Git Hub paramail sdeilers / git--  << doesn't work?
 

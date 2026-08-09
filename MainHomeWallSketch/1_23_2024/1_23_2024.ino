@@ -1302,15 +1302,16 @@ if (last_hold_rating/1000 >0 ) {
     hold_info[2]=' ';
     hold_info[3] = 0; // Explicitly set null terminator
 
-    if (itercount> max_iterations/2) {
+    if (itercount == max_iterations) {
       max_row_move=max_row_move+1;
     }
     old_holds=true;
     pick_count=0;
 
-    if (n_whitelist<1) {
+    if (n_whitelist<0) {
       // reset the whitelist 
       //Serial.println("whitelist reset");
+      max_row_move=max_row_move+1;
             int i_whitelist=0;
             u_row=min(irow_old+max_row_move,n_rows);
             for (int clist = l_column; clist <= r_column; clist = clist + 1) {
@@ -1321,6 +1322,7 @@ if (last_hold_rating/1000 >0 ) {
             }
   
       n_whitelist=i_whitelist-1;
+      
      }
 
 

@@ -4,12 +4,14 @@ set -e
 
 BIN="./1_23_2024.ino.bin"
 USB_PATH="1-1.1"
+FQBN="arduino:samd:nano_33_iot"
 
 echo "HomeWall Arduino uploader"
 echo "-------------------------"
 
 if [ ! -f "$BIN" ]; then
-    echo "ERROR: Could not find $BIN"
+    echo "ERROR: Could not find firmware file:"
+    echo "  $BIN"
     exit 1
 fi
 
@@ -35,57 +37,31 @@ PORT=$(find_port || true)
 
 if [ -z "$PORT" ]; then
     echo "ERROR: Could not find Arduino on USB path $USB_PATH"
+    echo
+    echo "Current ACM devices:"
+    for dev in /dev/ttyACM*; do
+        [ -e "$dev" ] || continue
+        tty=$(basename "$dev")
+        echo "$dev -> $(readlink -f "/sys/class/tty/$tty/device")"
+    done
     exit 1
 fi
 
-echo "Found Arduino at: $PORT"
-
+echo "Found HomeWall Arduino at:"
+echo "  $PORT"
 echo
-echo "Triggering 1200-baud bootloader reset..."
-
-stty -F "$PORT" 1200
-
-sleep 2
-
-echo
-echo "Waiting for Arduino bootloader..."
-
-BOOT_PORT=""
-
-for i in {1..20}; do
-    BOOT_PORT=$(find_port || true)
-
-    if [ -n "$BOOT_PORT" ]; then
-        break
-    fi
-
-    sleep 0.5
-done
-
-if [ -z "$BOOT_PORT" ]; then
-    echo "ERROR: Bootloader serial port did not appear."
-    exit 1
-fi
-
-echo "Bootloader found at: $BOOT_PORT"
-
-TTY_NAME=$(basename "$BOOT_PORT")
-
-echo
-echo "Uploading:"
+echo "Firmware:"
 echo "  $BIN"
-echo "to:"
-echo "  $BOOT_PORT"
+echo
+echo "Starting upload..."
 echo
 
-/usr/bin/bossac \
-    --port="$TTY_NAME" \
-    -i \
-    -e \
-    -w \
-    -v \
-    -R \
-    "$BIN"
+arduino-cli upload \
+    --fqbn "$FQBN" \
+    --port "$PORT" \
+    --input-file "$BIN" \
+    --verbose
 
 echo
+echo "-------------------------"
 echo "Upload complete."

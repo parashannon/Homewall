@@ -1116,7 +1116,7 @@ void setaRandomProblem() {
       //irow_old = irow;
       //pick_hold(irow_old, icolumn_old, min_row, last_hold_difficulty, worst_hold_allowable, max_row, max_column  );
       pick_hold(irow_old, icolumn_old,   -1,        5,                    1,                  0,          2, 1800,0, -max_column  );
-      bool bonus_hold = true;
+      bonus_hold = true;
       icolumn = icolumn_temp % 20;
       irow = irow_temp;
       last_delta_row=0;

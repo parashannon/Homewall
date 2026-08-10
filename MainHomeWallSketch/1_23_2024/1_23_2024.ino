@@ -1443,8 +1443,19 @@ if (last_hold_rating/1000 >0 ) {
     move_difficulty = max(total_move_sq,2) * (pow((7 - last_hold_difficulty), 2) + pow((7 - hold_rating), 2))+ pow(5-hold_rating,2)*30-60;
 
     // check difficulty for prevous hold as well after the first two moves
-    if (iset_indx>2 & max_allow_diff > 600) {
+    if (iset_indx>2 && max_allow_diff > 500) {
       HoldDecoded prev = parse_problem_entry(Problem_Library[ProblemNumber - 1][iset_indx-2]);
+      int old_n_row_move = (irow - prev.row);
+      int old_n_column_move = (icolumn - prev.col);
+      int old_total_move_sq = (old_n_row_move * old_n_row_move*3)/2 + old_n_column_move * old_n_column_move;
+      int old_move_difficulty=max(old_total_move_sq,2) * (pow((7 - prev.difficulty), 2) + pow((7 - hold_rating), 2))+ pow(5-hold_rating,2)*30-60;
+
+      move_difficulty=min(move_difficulty,old_move_difficulty);
+    }
+
+
+        if (iset_indx>3 && max_allow_diff > 500) {
+      HoldDecoded prev = parse_problem_entry(Problem_Library[ProblemNumber - 1][iset_indx-3]);
       int old_n_row_move = (irow - prev.row);
       int old_n_column_move = (icolumn - prev.col);
       int old_total_move_sq = (old_n_row_move * old_n_row_move*3)/2 + old_n_column_move * old_n_column_move;

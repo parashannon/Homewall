@@ -1109,13 +1109,14 @@ void setaRandomProblem() {
   int last_direction=0;
   int last_delta_row=0;
   while (ihold < 20) {
+    bool bonus_hold = false;
 
-
-    if (last_delta_row > 1 && random(0,800) > max_difficulty && random(0,700) > max_difficulty && irow_old>3 ){ 
+    if (last_delta_row > 1 && random(0,800) > max_difficulty && random(0,700) > max_difficulty && irow_old>3 && ihold<18){ 
       // pick a bonus hold
       //irow_old = irow;
       //pick_hold(irow_old, icolumn_old, min_row, last_hold_difficulty, worst_hold_allowable, max_row, max_column  );
       pick_hold(irow_old, icolumn_old,   -1,        5,                    1,                  0,          2, 1800,0, -max_column  );
+      bool bonus_hold = true;
       icolumn = icolumn_temp % 20;
       irow = irow_temp;
       last_delta_row=0;
@@ -1185,7 +1186,7 @@ void setaRandomProblem() {
       
     }
 
-   if (((irow > random(13,15)) && (last_hold_difficulty >= worst_hold_allowable) )|| (ihold == 19)) {
+   if (((irow > random(13,15)) && (last_hold_difficulty >= worst_hold_allowable) && !bonus_hold)|| (ihold == 19)) {
      // random 13,15 should drop probability of stopping on row 14 by ~50%
       Problem_Library[ProblemNumber - 1][ihold] = 10000 + 100 * irow + icolumn_temp;
       ihold = 20;
@@ -1409,7 +1410,7 @@ if (last_hold_rating/1000 >0 ) {
 
     if (total_move_sq > pow(max(abs(max_row_move), abs(min_row)) + 1, 2) ) { // move is big
       valid_move = (random(1, 10 + 1) > 8) && valid_move;
-    } else if  (total_move_sq <= 2) { //move is small, reroll
+    } else if  (((total_move_sq <= 2) && (max_allow_diff>400)) ||  ((total_move_sq <= 2) && irow<12 && (max_allow_diff<=400))) { //move is small, reroll
       valid_move = (random(1, 10 + 1) > 5) && valid_move;
     } else {
       valid_move = true && valid_move;

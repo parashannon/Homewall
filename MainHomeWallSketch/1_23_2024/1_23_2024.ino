@@ -514,9 +514,9 @@ void setLightToColor(int LED_row, int LED_column, byte Red, byte Green, byte Blu
 }
 
 void setWhite(){
-    for (int row_i = 1; row_i < 16; row_i = row_i + 1) {
+    for (int row_i = 7; row_i < 16; row_i = row_i + 1) {
       for (int column_i = 1; column_i < 12; column_i = column_i + 1) {
-        setLightToColor(row_i, column_i, 120, 120, 120);
+        setLightToColor(row_i, column_i, 255, 255, 255);
       }
     }
   FastLED.show();

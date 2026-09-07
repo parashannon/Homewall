@@ -10,7 +10,7 @@ bluetooth code, is, I think Home_Wall_v8_BluetoothOnly
 
 change on cloud
 download selection
-compile on pc
+compile on pc via IDE with export compiled binary
 upload binary
  ps -aux | grep python
 to kill process

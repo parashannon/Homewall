@@ -9,11 +9,70 @@
 struct HoldDecoded {
   int row;         // 1..16
   int col;         // 1..11 (after hard flag is stripped)
-  int difficulty;  // 0 = easy use, 1 = hard use (based on "col>20" encoding)
+  int difficulty;  // decoded difficulty rating for the selected basic/difficult use
   bool start_hold;
   bool end_hold;
   bool valid;      // false if entry==0 or row/col invalid
 };
+
+// -----------------------------------------------------------------------------
+// valid_holds encoding
+// -----------------------------------------------------------------------------
+// Each physical hold may have a BASIC use and an optional DIFFICULT use.
+//
+//   valid_holds value = DDD BBB
+//                       ^^^ ^^^
+//                       hard basic
+//
+// Each 3-digit use block is encoded as MTD:
+//   M (hundreds) = match flag: 0 = normal, 1 = match-friendly
+//   T (tens)     = hold type: 0 = normal, 1 = undercling,
+//                              2 = left-only sidepull, 3 = right-only sidepull
+//   D (ones)     = hold difficulty rating (1..5)
+//
+// Examples:
+//   3       -> basic: normal, difficulty 3
+//   13      -> basic: undercling, difficulty 3
+//   102     -> basic: match-friendly, normal, difficulty 2
+//   11002   -> basic: normal difficulty 2; difficult: undercling difficulty 1
+//   101005  -> basic: normal difficulty 5; difficult: match-friendly normal diff 1
+//
+// The Problem_Library still uses +20 on the column to record that the difficult
+// use was selected. This encoding change only affects valid_holds.
+
+const int HOLD_TYPE_NORMAL          = 0;
+const int HOLD_TYPE_UNDERCLING      = 1;
+const int HOLD_TYPE_LEFT_SIDEPULL   = 2;
+const int HOLD_TYPE_RIGHT_SIDEPULL  = 3;
+
+int basic_hold_code(int raw) {
+  return raw % 1000;
+}
+
+int difficult_hold_code(int raw) {
+  return (raw / 1000) % 1000;
+}
+
+bool has_difficult_hold(int raw) {
+  return difficult_hold_code(raw) > 0;
+}
+
+int selected_hold_code(int raw, bool harder_hold) {
+  int hard_code = difficult_hold_code(raw);
+  return (harder_hold && hard_code > 0) ? hard_code : basic_hold_code(raw);
+}
+
+int hold_code_difficulty(int code) {
+  return code % 10;
+}
+
+int hold_code_type(int code) {
+  return (code / 10) % 10;
+}
+
+bool hold_code_match(int code) {
+  return ((code / 100) % 10) == 1;
+}
 
 
 const int ledPin = LED_BUILTIN;  // set ledPin to on-board LED
@@ -1183,7 +1242,7 @@ void setaRandomProblem() {
   
   
       if (icolumn_temp > 20) {
-        last_hold_difficulty = valid_holds[irow][icolumn]%100 / 10 ;
+        last_hold_difficulty = hold_code_difficulty(difficult_hold_code(valid_holds[irow][icolumn]));
       } else {
         last_hold_difficulty = valid_holds[irow][icolumn] % 10 ;
       }
@@ -1288,9 +1347,11 @@ void pick_hold(int irow_old, int icolumn_old, int min_row, int last_hold_difficu
    int l_row=max(irow_old+min_row,1);
    int u_row=min(irow_old+max_row_move,n_rows);
    last_hold_rating = valid_holds[irow_old][icolumn_old];
-if (last_hold_rating/1000 >0 ) {
-  wasmatch=true;
-}
+   // Match is a property inside the 3-digit use block.  We do not currently
+   // pass the previous easy/hard-use flag into pick_hold(), so treat the
+   // previous hold as match-friendly if either defined use is match-friendly.
+   wasmatch = hold_code_match(basic_hold_code(last_hold_rating)) ||
+              hold_code_match(difficult_hold_code(last_hold_rating));
   
     int i_whitelist=0;
     for (int clist = l_column; clist <= r_column; clist = clist + 1) {
@@ -1350,40 +1411,35 @@ if (last_hold_rating/1000 >0 ) {
     hold_rating_raw = valid_holds[irow][icolumn];
     
     harder_hold = false;
-    if (hold_rating_raw % 100 > 10) {
-      // the hold has two uses, roll for harder use
-      randi = random(1, 10)+floor(max_allow_diff/900);
+    if (has_difficult_hold(hold_rating_raw)) {
+      // This hold has two distinct 3-digit use definitions. Roll for difficult use.
+      randi = random(1, 10) + floor(max_allow_diff / 900);
       if (randi > 5 && min_hold_level < 2) {
-        hold_rating = (hold_rating_raw%100) / 10; // use the harder hold
         harder_hold = true;
-        hold_info[0]='H';
-      } else {
-        hold_rating = hold_rating_raw % 10; // use the easier hold
-        harder_hold = false;
+        hold_info[0] = 'H';
       }
-    } else {
-      hold_rating = hold_rating_raw % 10;
     }
 
-    // check to see if this is an undercling
-    if (    ((hold_rating_raw/100)%10 == 1) ||   (((hold_rating_raw/100)%10 == 2) && (harder_hold == true ) )  ) { // the 100s digit is a 1 or a 2 for the         harder hold
-      //Serial.print("Underclingr");
-      //Serial.print(irow);
-      //Serial.print(" c");
-      //Serial.println(icolumn);
+    int hold_code = selected_hold_code(hold_rating_raw, harder_hold);
+    hold_rating = hold_code_difficulty(hold_code);
+    int hold_type = hold_code_type(hold_code);
+
+    // Undercling behavior now follows the SELECTED use.  This replaces the old
+    // hundreds-digit values 1=always-undercling / 2=hard-use-undercling.
+    if (hold_type == HOLD_TYPE_UNDERCLING) {
       isfeet = false;
-      
-      isfeet= (holds_in_area(irow, icolumn, -6, -3, -2, 2)>0)&&(holds_in_area(irow_old, icolumn_old, -5, -2, -3, 3)>0) ;
-      isundercling=true;
-      hold_info[1]='U';
+      isfeet = (holds_in_area(irow, icolumn, -6, -3, -2, 2) > 0) &&
+               (holds_in_area(irow_old, icolumn_old, -5, -2, -3, 3) > 0);
+      isundercling = true;
+      hold_info[1] = 'U';
       if (!isfeet) {
         valid_move = false;
-        //Serial.println("No Feet");
-      } else {
-        // Serial.println("Feet Found!");
       }
     }
 
+    // HOLD_TYPE_LEFT_SIDEPULL and HOLD_TYPE_RIGHT_SIDEPULL are decoded here
+    // but intentionally not rejected/scored yet. Add the directional rule once
+    // the exact left/right criterion is defined.
     
     n_row_move = (irow - irow_old);
     n_column_move = (icolumn - icolumn_old);
@@ -1695,7 +1751,7 @@ void LED_drifter() {
       if (icolumn_temp < 20) {
         last_hold_difficulty = valid_holds[irow][icolumn] % 10 ;
       } else {
-        last_hold_difficulty = valid_holds[irow][icolumn] / 10 ;
+        last_hold_difficulty = hold_code_difficulty(difficult_hold_code(valid_holds[irow][icolumn]));
       }
       Problem_Library[ProblemNumber - 1][ihold] = 100 * irow + icolumn_temp;
     }
@@ -2001,11 +2057,8 @@ HoldDecoded parse_problem_entry(int entry_raw) {
   h.col = col_raw;
 
   int hold_rating_raw = valid_holds[h.row][h.col];
- if (harder_hold){
-          h.difficulty = (hold_rating_raw%100) / 10; // use the harder hold
-      } else {
-        h.difficulty = hold_rating_raw % 10; // use the easier hold
- }
+  int hold_code = selected_hold_code(hold_rating_raw, harder_hold);
+  h.difficulty = hold_code_difficulty(hold_code);
   // basic sanity (match your setProblem bounds)
   if (h.col > 0 && h.col < 12 && h.row > 0 && h.row < 17) h.valid = true;
 

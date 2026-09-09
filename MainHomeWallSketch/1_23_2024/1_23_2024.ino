@@ -27,7 +27,7 @@ struct HoldDecoded {
 // Each 3-digit use block is encoded as MTD:
 //   M (hundreds) = match flag: 0 = normal, 1 = match-friendly
 //   T (tens)     = hold type: 0 = normal, 1 = undercling,
-//                              2 = left-only sidepull, 3 = right-only sidepull
+//                              2 = left-facing sidepull, 3 = right-facing sidepull
 //   D (ones)     = hold difficulty rating (1..5)
 //
 // Examples:
@@ -128,6 +128,46 @@ unsigned long t_LED_drifter_start = 0;
 int total_diff = 0; // total problem difficulty
 int min_good = 0; // minimum hold goodness
 bool sent_serial = false;
+
+//-----------------------------------------------------------------------------
+// NEW SIDEpull SUPPORT: find the ACTUAL selected use of a previous problem hold
+//-----------------------------------------------------------------------------
+// Problem_Library records a difficult-use hold by adding 20 to its column.
+// pick_hold() is passed only the previous physical row/column, so this helper
+// searches the current problem backwards and recovers whether that hold was
+// actually stored as its basic or difficult use.  This lets sidepull checks use
+// the direction of the hold the climber really got, not just the basic entry.
+int get_problem_hold_type(int target_row, int target_col) {
+  for (int i = 19; i >= 0; i--) {
+    int entry = Problem_Library[ProblemNumber - 1][i];
+    if (entry == 0) continue;
+
+    entry = abs(entry);            // remove start-hold sign
+    if (entry > 10000) entry -= 10000;  // remove end-hold flag
+
+    int col_raw = entry % 100;
+    int row = (entry - col_raw) / 100;
+    bool hard_use = (col_raw > 20);
+    int col = hard_use ? (col_raw % 20) : col_raw;
+
+    if (row == target_row && col == target_col) {
+      int raw = valid_holds[row][col];
+      int code = selected_hold_code(raw, hard_use);
+      return hold_code_type(code);
+    }
+  }
+
+  // Fallback for artificial/start references that are not yet in Problem_Library.
+  // Use the basic definition of that physical hold.
+  if (target_row > 0 && target_row < 17 && target_col > 0 && target_col < 12) {
+    return hold_code_type(basic_hold_code(valid_holds[target_row][target_col]));
+  }
+
+  return HOLD_TYPE_NORMAL;
+}
+//-----------------------------------------------------------------------------
+// END NEW SIDEpull SUPPORT
+//-----------------------------------------------------------------------------
 
 void setup() {
 
@@ -1332,7 +1372,10 @@ void pick_hold(int irow_old, int icolumn_old, int min_row, int last_hold_difficu
   bool isundercling=false;
   bool wasfeet = false;
   bool wasmatch = false;
-  char hold_info[4];
+  // Expanded so multiple special-move flags can be shown at once:
+  // [0]=H hard use, [1]=U undercling, [2]=S same-dir sidepull,
+  // [3]=G gaston, [4]=F missing opposing sidepull foot, [5]=X crossover.
+  char hold_info[8];
   int whitelist[300];
   int testint;
   bool old_holds=false;
@@ -1365,10 +1408,10 @@ void pick_hold(int irow_old, int icolumn_old, int min_row, int last_hold_difficu
   
   while (!valid_hold ) {
 
-    hold_info[0]=' ';
-    hold_info[1]=' ';
-    hold_info[2]=' ';
-    hold_info[3] = 0; // Explicitly set null terminator
+    for (int iinfo = 0; iinfo < 7; iinfo++) {
+      hold_info[iinfo] = ' ';
+    }
+    hold_info[7] = 0; // Explicitly set null terminator
 
     if (itercount == max_iterations) {
       max_row_move=max_row_move+1;
@@ -1437,12 +1480,62 @@ void pick_hold(int irow_old, int icolumn_old, int min_row, int last_hold_difficu
       }
     }
 
-    // HOLD_TYPE_LEFT_SIDEPULL and HOLD_TYPE_RIGHT_SIDEPULL are decoded here
-    // but intentionally not rejected/scored yet. Add the directional rule once
-    // the exact left/right criterion is defined.
-    
+    //-----------------------------------------------------------------------------
+    // NEW SIDEPULL GEOMETRY CHECKS
+    //-----------------------------------------------------------------------------
+    // SIDE_LEFT means a left-facing sidepull; SIDE_RIGHT means right-facing.
+    // These checks DO NOT reject the move.  They set conditions that are used
+    // later to increase move_difficulty.
+    //
+    // Same-direction sidepull:
+    //   left  -> left, or right -> right
+    //
+    // Gaston into a sidepull:
+    //   moving RIGHT into a LEFT-facing sidepull
+    //   moving LEFT  into a RIGHT-facing sidepull
+    //
+    // Gaston out of a sidepull:
+    //   moving LEFT  out of a LEFT-facing sidepull
+    //   moving RIGHT out of a RIGHT-facing sidepull
+    //
+    // Opposing-foot window for the NEW sidepull:
+    //   left-facing:  rows -6..-2, columns -4..-1
+    //   right-facing: rows -6..-2, columns +1..+4
+
+    int last_type = get_problem_hold_type(irow_old, icolumn_old);
+
     n_row_move = (irow - irow_old);
     n_column_move = (icolumn - icolumn_old);
+
+    bool same_direction_sidepull =
+        (hold_type == HOLD_TYPE_LEFT_SIDEPULL  && last_type == HOLD_TYPE_LEFT_SIDEPULL) ||
+        (hold_type == HOLD_TYPE_RIGHT_SIDEPULL && last_type == HOLD_TYPE_RIGHT_SIDEPULL);
+
+    bool gaston_into =
+        (hold_type == HOLD_TYPE_LEFT_SIDEPULL  && n_column_move > 0) ||
+        (hold_type == HOLD_TYPE_RIGHT_SIDEPULL && n_column_move < 0);
+
+    bool gaston_out =
+        (last_type == HOLD_TYPE_LEFT_SIDEPULL  && n_column_move < 0) ||
+        (last_type == HOLD_TYPE_RIGHT_SIDEPULL && n_column_move > 0);
+
+    // Count gaston as one condition even if both the into and out tests happen
+    // to be true on the same move.
+    bool gaston = gaston_into || gaston_out;
+
+    bool sidepull_feet = true;
+    if (hold_type == HOLD_TYPE_LEFT_SIDEPULL) {
+      sidepull_feet = holds_in_area(irow, icolumn, -6, -2, -4, -1) > 0;
+    } else if (hold_type == HOLD_TYPE_RIGHT_SIDEPULL) {
+      sidepull_feet = holds_in_area(irow, icolumn, -6, -2, 1, 4) > 0;
+    }
+
+    bool no_sidepull_feet =
+        (hold_type == HOLD_TYPE_LEFT_SIDEPULL ||
+         hold_type == HOLD_TYPE_RIGHT_SIDEPULL) && !sidepull_feet;
+    //-----------------------------------------------------------------------------
+    // END NEW SIDEPULL GEOMETRY CHECKS
+    //-----------------------------------------------------------------------------
     int total_move_sq = (n_row_move * n_row_move*3)/2 + n_column_move * n_column_move;
     int iset_indx=0;
     // make sure the move isn't already in the climb
@@ -1526,8 +1619,35 @@ void pick_hold(int irow_old, int icolumn_old, int min_row, int last_hold_difficu
       move_difficulty=min(move_difficulty,old_move_difficulty);
     }
 
+    //-----------------------------------------------------------------------------
+    // NEW SIDEPULL DIFFICULTY PENALTIES
+    //-----------------------------------------------------------------------------
+    // Each condition stacks independently.  For EVERY triggered condition:
+    //     move_difficulty = move_difficulty * 1.5 + 100
+    //
+    // Because they are applied sequentially, an earlier +100 is also multiplied
+    // by any later penalty, intentionally.
+
+    if (same_direction_sidepull) {
+      move_difficulty = (move_difficulty * 3) / 2 + 100;
+      hold_info[2] = 'S';
+    }
+
+    if (gaston) {
+      move_difficulty = (move_difficulty * 3) / 2 + 100;
+      hold_info[3] = 'G';
+    }
+
+    if (no_sidepull_feet) {
+      move_difficulty = (move_difficulty * 3) / 2 + 100;
+      hold_info[4] = 'F';
+    }
+    //-----------------------------------------------------------------------------
+    // END NEW SIDEPULL DIFFICULTY PENALTIES
+    //-----------------------------------------------------------------------------
+
 if (!isfeet){
-  move_difficulty=move_difficulty*2; // move is much harder if there are no feet
+  move_difficulty=move_difficulty*2; // existing generic no-feet penalty
  
 }
 
@@ -1544,7 +1664,7 @@ if (!isfeet){
    // if this is a bump/cross it is harder
    if (last_direction*(n_column_move) > 0){
      move_difficulty=move_difficulty+(move_difficulty)/2+100;
-      hold_info[2]='X';
+      hold_info[5]='X';
    } else if (n_column_move==0 && n_row_move>2){
      move_difficulty=move_difficulty+100;
    }

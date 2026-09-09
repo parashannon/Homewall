@@ -29,18 +29,17 @@ def search_and_return_integers(filename, phrase):
     pattern = re.compile(r"(?<=- )(-?\d+(?:\s*,\s*-?\d+){19})")
 
     with open(filename, "r", encoding="utf-8", errors="replace") as file:
-        found_phrase = False
+        lines = file.readlines()
 
-        for line in file:
-            if phrase.lower() in line.lower():
-                found_phrase = True
-            elif found_phrase:
-                match = pattern.search(line)
+    for i in range(len(lines) - 1, -1, -1):
+        if phrase.lower() in lines[i].lower():
+            # Search forward from this name for the associated problem line
+            for j in range(i + 1, min(i + 20, len(lines))):
+                match = pattern.search(lines[j])
                 if match:
                     return match.group(1)
 
     return None
-
 
 def extract_last_two_words(phrase):
     cleaned_phrase = "".join(

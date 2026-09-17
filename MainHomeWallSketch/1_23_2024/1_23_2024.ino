@@ -16,7 +16,7 @@ struct HoldDecoded {
 };
 
 // -----------------------------------------------------------------------------
-// valid_holds encoding
+// DIRECTIONAL HOLD ENCODING
 // -----------------------------------------------------------------------------
 // Each physical hold may have a BASIC use and an optional DIFFICULT use.
 //
@@ -24,26 +24,42 @@ struct HoldDecoded {
 //                       ^^^ ^^^
 //                       hard basic
 //
-// Each 3-digit use block is encoded as MTD:
+// Each 3-digit use block is encoded as MOD:
 //   M (hundreds) = match flag: 0 = normal, 1 = match-friendly
-//   T (tens)     = hold type: 0 = normal, 1 = undercling,
-//                              2 = left-facing sidepull, 3 = right-facing sidepull
+//   O (tens)     = orientation:
+//                    0 = normal / downpull
+//                    1 = 45 deg LEFT-facing
+//                    2 = 90 deg LEFT-facing sidepull
+//                    3 = undercling
+//                    4 = 45 deg RIGHT-facing
+//                    5 = 90 deg RIGHT-facing sidepull
 //   D (ones)     = hold difficulty rating (1..5)
 //
 // Examples:
 //   3       -> basic: normal, difficulty 3
-//   13      -> basic: undercling, difficulty 3
-//   102     -> basic: match-friendly, normal, difficulty 2
-//   11002   -> basic: normal difficulty 2; difficult: undercling difficulty 1
-//   101005  -> basic: normal difficulty 5; difficult: match-friendly normal diff 1
+//   13      -> basic: 45 deg left, difficulty 3
+//   23      -> basic: 90 deg left, difficulty 3
+//   33      -> basic: undercling, difficulty 3
+//   43      -> basic: 45 deg right, difficulty 3
+//   53      -> basic: 90 deg right, difficulty 3
+//   102     -> basic: match-friendly normal, difficulty 2
 //
 // The Problem_Library still uses +20 on the column to record that the difficult
 // use was selected. This encoding change only affects valid_holds.
+//
+// Directional difficulty penalties:
+//   90 deg condition: move_difficulty = move_difficulty * 1.50 + 100
+//   45 deg condition: move_difficulty = move_difficulty * 1.25 +  50
+//
+// Conditions stack sequentially, so an earlier +100/+50 can itself be
+// multiplied by a later condition.
 
-const int HOLD_TYPE_NORMAL          = 0;
-const int HOLD_TYPE_UNDERCLING      = 1;
-const int HOLD_TYPE_LEFT_SIDEPULL   = 2;
-const int HOLD_TYPE_RIGHT_SIDEPULL  = 3;
+const int HOLD_ORIENT_NORMAL    = 0;
+const int HOLD_ORIENT_LEFT_45   = 1;
+const int HOLD_ORIENT_LEFT_90   = 2;
+const int HOLD_ORIENT_UNDERCLING= 3;
+const int HOLD_ORIENT_RIGHT_45  = 4;
+const int HOLD_ORIENT_RIGHT_90  = 5;
 
 int basic_hold_code(int raw) {
   return raw % 1000;
@@ -66,8 +82,44 @@ int hold_code_difficulty(int code) {
   return code % 10;
 }
 
-int hold_code_type(int code) {
+int hold_code_orientation(int code) {
   return (code / 10) % 10;
+}
+
+// Return -1 for left-facing, +1 for right-facing, 0 for non-sidepull directions.
+int hold_orientation_side(int orientation) {
+  if (orientation == HOLD_ORIENT_LEFT_45 || orientation == HOLD_ORIENT_LEFT_90) {
+    return -1;
+  }
+  if (orientation == HOLD_ORIENT_RIGHT_45 || orientation == HOLD_ORIENT_RIGHT_90) {
+    return 1;
+  }
+  return 0;
+}
+
+// Directional strength:
+//   0 = not horizontally directional
+//   1 = 45 degrees
+//   2 = 90 degrees
+int hold_orientation_strength(int orientation) {
+  if (orientation == HOLD_ORIENT_LEFT_45 || orientation == HOLD_ORIENT_RIGHT_45) {
+    return 1;
+  }
+  if (orientation == HOLD_ORIENT_LEFT_90 || orientation == HOLD_ORIENT_RIGHT_90) {
+    return 2;
+  }
+  return 0;
+}
+
+// Apply one directional penalty.
+// Half-strength (45 deg): x1.25 + 50
+// Full-strength (90 deg): x1.50 + 100
+void apply_directional_penalty(int &move_difficulty, int strength) {
+  if (strength >= 2) {
+    move_difficulty = (move_difficulty * 3) / 2 + 100;
+  } else if (strength == 1) {
+    move_difficulty = (move_difficulty * 5) / 4 + 50;
+  }
 }
 
 bool hold_code_match(int code) {
@@ -130,19 +182,18 @@ int min_good = 0; // minimum hold goodness
 bool sent_serial = false;
 
 //-----------------------------------------------------------------------------
-// NEW SIDEpull SUPPORT: find the ACTUAL selected use of a previous problem hold
+// NEW DIRECTIONAL-HOLD SUPPORT: recover the ACTUAL previous hold orientation
 //-----------------------------------------------------------------------------
 // Problem_Library records a difficult-use hold by adding 20 to its column.
 // pick_hold() is passed only the previous physical row/column, so this helper
 // searches the current problem backwards and recovers whether that hold was
-// actually stored as its basic or difficult use.  This lets sidepull checks use
-// the direction of the hold the climber really got, not just the basic entry.
-int get_problem_hold_type(int target_row, int target_col) {
+// actually stored as its basic or difficult use.
+int get_problem_hold_orientation(int target_row, int target_col) {
   for (int i = 19; i >= 0; i--) {
     int entry = Problem_Library[ProblemNumber - 1][i];
     if (entry == 0) continue;
 
-    entry = abs(entry);            // remove start-hold sign
+    entry = abs(entry);                  // remove start-hold sign
     if (entry > 10000) entry -= 10000;  // remove end-hold flag
 
     int col_raw = entry % 100;
@@ -153,20 +204,19 @@ int get_problem_hold_type(int target_row, int target_col) {
     if (row == target_row && col == target_col) {
       int raw = valid_holds[row][col];
       int code = selected_hold_code(raw, hard_use);
-      return hold_code_type(code);
+      return hold_code_orientation(code);
     }
   }
 
-  // Fallback for artificial/start references that are not yet in Problem_Library.
-  // Use the basic definition of that physical hold.
+  // Fallback for artificial/start references not yet stored in Problem_Library.
   if (target_row > 0 && target_row < 17 && target_col > 0 && target_col < 12) {
-    return hold_code_type(basic_hold_code(valid_holds[target_row][target_col]));
+    return hold_code_orientation(basic_hold_code(valid_holds[target_row][target_col]));
   }
 
-  return HOLD_TYPE_NORMAL;
+  return HOLD_ORIENT_NORMAL;
 }
 //-----------------------------------------------------------------------------
-// END NEW SIDEpull SUPPORT
+// END NEW DIRECTIONAL-HOLD SUPPORT
 //-----------------------------------------------------------------------------
 
 void setup() {
@@ -1373,8 +1423,8 @@ void pick_hold(int irow_old, int icolumn_old, int min_row, int last_hold_difficu
   bool wasfeet = false;
   bool wasmatch = false;
   // Expanded so multiple special-move flags can be shown at once:
-  // [0]=H hard use, [1]=U undercling, [2]=S same-dir sidepull,
-  // [3]=G gaston, [4]=F missing opposing sidepull foot, [5]=X crossover.
+  // [0]=H hard use, [1]=U undercling, [2]=S same-dir directional holds,
+  // [3]=G gaston, [4]=F missing opposing directional foot, [5]=X crossover.
   char hold_info[8];
   int whitelist[300];
   int testint;
@@ -1465,11 +1515,10 @@ void pick_hold(int irow_old, int icolumn_old, int min_row, int last_hold_difficu
 
     int hold_code = selected_hold_code(hold_rating_raw, harder_hold);
     hold_rating = hold_code_difficulty(hold_code);
-    int hold_type = hold_code_type(hold_code);
+    int hold_orientation = hold_code_orientation(hold_code);
 
-    // Undercling behavior now follows the SELECTED use.  This replaces the old
-    // hundreds-digit values 1=always-undercling / 2=hard-use-undercling.
-    if (hold_type == HOLD_TYPE_UNDERCLING) {
+    // Undercling behavior follows the SELECTED use.
+    if (hold_orientation == HOLD_ORIENT_UNDERCLING) {
       isfeet = false;
       isfeet = (holds_in_area(irow, icolumn, -6, -3, -2, 2) > 0) &&
                (holds_in_area(irow_old, icolumn_old, -5, -2, -3, 3) > 0);
@@ -1481,60 +1530,78 @@ void pick_hold(int irow_old, int icolumn_old, int min_row, int last_hold_difficu
     }
 
     //-----------------------------------------------------------------------------
-    // NEW SIDEPULL GEOMETRY CHECKS
+    // NEW DIRECTIONAL-HOLD GEOMETRY CHECKS
     //-----------------------------------------------------------------------------
-    // SIDE_LEFT means a left-facing sidepull; SIDE_RIGHT means right-facing.
-    // These checks DO NOT reject the move.  They set conditions that are used
-    // later to increase move_difficulty.
+    // Horizontal directional holds may be 45 deg or 90 deg.
     //
-    // Same-direction sidepull:
-    //   left  -> left, or right -> right
+    // SAME DIRECTION:
+    //   previous and new holds both face left, or both face right.
+    //   Severity is controlled by the weaker of the two holds:
+    //     90 -> 90 = full penalty
+    //     90 -> 45 = half penalty
+    //     45 -> 45 = half penalty
     //
-    // Gaston into a sidepull:
-    //   moving RIGHT into a LEFT-facing sidepull
-    //   moving LEFT  into a RIGHT-facing sidepull
+    // GASTON INTO:
+    //   moving RIGHT into a LEFT-facing hold
+    //   moving LEFT  into a RIGHT-facing hold
+    //   Severity comes from the NEW hold angle.
     //
-    // Gaston out of a sidepull:
-    //   moving LEFT  out of a LEFT-facing sidepull
-    //   moving RIGHT out of a RIGHT-facing sidepull
+    // GASTON OUT:
+    //   moving LEFT  out of a LEFT-facing hold
+    //   moving RIGHT out of a RIGHT-facing hold
+    //   Severity comes from the PREVIOUS hold angle.
     //
-    // Opposing-foot window for the NEW sidepull:
+    // If gaston-in and gaston-out are both true, count this as ONE gaston
+    // condition using the stronger of the two directional angles.
+    //
+    // OPPOSING FOOT WINDOW for the NEW directional hold:
     //   left-facing:  rows -6..-2, columns -4..-1
     //   right-facing: rows -6..-2, columns +1..+4
+    // Foot penalty severity comes from the NEW hold angle.
 
-    int last_type = get_problem_hold_type(irow_old, icolumn_old);
+    int last_orientation = get_problem_hold_orientation(irow_old, icolumn_old);
+
+    int hold_side = hold_orientation_side(hold_orientation);
+    int last_side = hold_orientation_side(last_orientation);
+
+    int hold_direction_strength = hold_orientation_strength(hold_orientation);
+    int last_direction_strength = hold_orientation_strength(last_orientation);
 
     n_row_move = (irow - irow_old);
     n_column_move = (icolumn - icolumn_old);
 
-    bool same_direction_sidepull =
-        (hold_type == HOLD_TYPE_LEFT_SIDEPULL  && last_type == HOLD_TYPE_LEFT_SIDEPULL) ||
-        (hold_type == HOLD_TYPE_RIGHT_SIDEPULL && last_type == HOLD_TYPE_RIGHT_SIDEPULL);
-
-    bool gaston_into =
-        (hold_type == HOLD_TYPE_LEFT_SIDEPULL  && n_column_move > 0) ||
-        (hold_type == HOLD_TYPE_RIGHT_SIDEPULL && n_column_move < 0);
-
-    bool gaston_out =
-        (last_type == HOLD_TYPE_LEFT_SIDEPULL  && n_column_move < 0) ||
-        (last_type == HOLD_TYPE_RIGHT_SIDEPULL && n_column_move > 0);
-
-    // Count gaston as one condition even if both the into and out tests happen
-    // to be true on the same move.
-    bool gaston = gaston_into || gaston_out;
-
-    bool sidepull_feet = true;
-    if (hold_type == HOLD_TYPE_LEFT_SIDEPULL) {
-      sidepull_feet = holds_in_area(irow, icolumn, -6, -2, -4, -1) > 0;
-    } else if (hold_type == HOLD_TYPE_RIGHT_SIDEPULL) {
-      sidepull_feet = holds_in_area(irow, icolumn, -6, -2, 1, 4) > 0;
+    int same_direction_strength = 0;
+    if (hold_side != 0 && hold_side == last_side) {
+      same_direction_strength = min(hold_direction_strength, last_direction_strength);
     }
 
-    bool no_sidepull_feet =
-        (hold_type == HOLD_TYPE_LEFT_SIDEPULL ||
-         hold_type == HOLD_TYPE_RIGHT_SIDEPULL) && !sidepull_feet;
+    int gaston_into_strength = 0;
+    if ((hold_side < 0 && n_column_move > 0) ||
+        (hold_side > 0 && n_column_move < 0)) {
+      gaston_into_strength = hold_direction_strength;
+    }
+
+    int gaston_out_strength = 0;
+    if ((last_side < 0 && n_column_move < 0) ||
+        (last_side > 0 && n_column_move > 0)) {
+      gaston_out_strength = last_direction_strength;
+    }
+
+    int gaston_strength = max(gaston_into_strength, gaston_out_strength);
+
+    bool directional_feet = true;
+    if (hold_side < 0) {
+      directional_feet = holds_in_area(irow, icolumn, -6, -2, -4, -1) > 0;
+    } else if (hold_side > 0) {
+      directional_feet = holds_in_area(irow, icolumn, -6, -2, 1, 4) > 0;
+    }
+
+    int no_directional_feet_strength = 0;
+    if (hold_side != 0 && !directional_feet) {
+      no_directional_feet_strength = hold_direction_strength;
+    }
     //-----------------------------------------------------------------------------
-    // END NEW SIDEPULL GEOMETRY CHECKS
+    // END NEW DIRECTIONAL-HOLD GEOMETRY CHECKS
     //-----------------------------------------------------------------------------
     int total_move_sq = (n_row_move * n_row_move*3)/2 + n_column_move * n_column_move;
     int iset_indx=0;
@@ -1620,30 +1687,37 @@ void pick_hold(int irow_old, int icolumn_old, int min_row, int last_hold_difficu
     }
 
     //-----------------------------------------------------------------------------
-    // NEW SIDEPULL DIFFICULTY PENALTIES
+    // NEW DIRECTIONAL-HOLD DIFFICULTY PENALTIES
     //-----------------------------------------------------------------------------
-    // Each condition stacks independently.  For EVERY triggered condition:
-    //     move_difficulty = move_difficulty * 1.5 + 100
+    // Conditions stack independently and sequentially.
     //
-    // Because they are applied sequentially, an earlier +100 is also multiplied
-    // by any later penalty, intentionally.
+    // 90 deg condition:
+    //     move_difficulty = move_difficulty * 1.50 + 100
+    //
+    // 45 deg condition ("half penalty"):
+    //     move_difficulty = move_difficulty * 1.25 + 50
+    //
+    // The conditions remain:
+    //   S = same-direction directional holds
+    //   G = gaston into/out of a directional hold
+    //   F = no opposing foot in the directional foot window
 
-    if (same_direction_sidepull) {
-      move_difficulty = (move_difficulty * 3) / 2 + 100;
+    if (same_direction_strength > 0) {
+      apply_directional_penalty(move_difficulty, same_direction_strength);
       hold_info[2] = 'S';
     }
 
-    if (gaston) {
-      move_difficulty = (move_difficulty * 3) / 2 + 100;
+    if (gaston_strength > 0) {
+      apply_directional_penalty(move_difficulty, gaston_strength);
       hold_info[3] = 'G';
     }
 
-    if (no_sidepull_feet) {
-      move_difficulty = (move_difficulty * 3) / 2 + 100;
+    if (no_directional_feet_strength > 0) {
+      apply_directional_penalty(move_difficulty, no_directional_feet_strength);
       hold_info[4] = 'F';
     }
     //-----------------------------------------------------------------------------
-    // END NEW SIDEPULL DIFFICULTY PENALTIES
+    // END NEW DIRECTIONAL-HOLD DIFFICULTY PENALTIES
     //-----------------------------------------------------------------------------
 
 if (!isfeet){

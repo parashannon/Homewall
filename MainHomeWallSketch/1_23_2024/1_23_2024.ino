@@ -33,7 +33,7 @@ struct HoldDecoded {
 //                    3 = undercling
 //                    4 = 45 deg RIGHT-facing
 //                    5 = 90 deg RIGHT-facing sidepull
-//   D (ones)     = hold difficulty rating (1..5)
+//   D (ones)     = hold difficulty rating (1..9: 1 easiest, 9 hardest; 0 = no hold/use)
 //
 // Examples:
 //   3       -> basic: normal, difficulty 3
@@ -80,6 +80,16 @@ int selected_hold_code(int raw, bool harder_hold) {
 
 int hold_code_difficulty(int code) {
   return code % 10;
+}
+
+// Preserve the existing move-score scale while using 1=easy through 9=hard.
+// Original ratings 5,4,3,2,1 map to 1,3,5,7,9; even ratings interpolate.
+int hold_move_score(int distance_sq, int from_difficulty, int to_difficulty) {
+  float from_term = (from_difficulty + 3) / 2.0f;
+  float to_term = (to_difficulty + 3) / 2.0f;
+  float grip_term = (to_difficulty - 1) / 2.0f;
+  return max(distance_sq, 2) * (from_term * from_term + to_term * to_term)
+         + grip_term * grip_term * 30 - 60;
 }
 
 int hold_code_orientation(int code) {
@@ -688,31 +698,22 @@ void showDifficulty() {
       holddiff = valid_holds[row_i][column_i];
       holddiff = holddiff % 10;
       //Serial.println(holddiff);
-      if (holddiff == 5) {
-        R = 0;
-        G = 0;
-        B = 200;
-      } else if (holddiff == 4) {
-        R = 0;
-        G = 200;
-        B = 60;
-      } else if (holddiff == 3) {
-        R = 180;
-        G = 180;
-        B = 0;
-      } else if (holddiff == 2) {
-        R = 230;
-        G = 75;
-        B = 0;
-      } else if (holddiff == 1) {
-        R = 254;
-        G = 0;
-        B = 0;
-      } else {
-        R = 0;
-        G = 0;
-        B = 0;
-      }
+      // Original colors at odd ratings; intermediate colors at even ratings.
+      const byte rating_colors[10][3] = {
+        {0, 0, 0},       // 0: no hold
+        {0, 0, 200},     // 1: easiest
+        {0, 100, 130},
+        {0, 200, 60},
+        {90, 190, 30},
+        {180, 180, 0},
+        {205, 127, 0},
+        {230, 75, 0},
+        {242, 37, 0},
+        {254, 0, 0}      // 9: hardest
+      };
+      R = rating_colors[holddiff][0];
+      G = rating_colors[holddiff][1];
+      B = rating_colors[holddiff][2];
 
 
 
@@ -1094,7 +1095,7 @@ void setaRandomProblem() {
                        //{300, 300, 350, 471, 653,  920, 1600, 2400, 3500, 4600, 6300};                                 
                        //{300, 300, 350, 471, 653,  889, 1350, 1813, 2200, 2700, 3300};
                        //{300, 300, 350, 471, 653,  889, 1277, 1613, 1996, 2425, 2950}; Pre 5/7/2025
-  int WH_per_level[11]=  {2,   2,    2,   2,    2,   1,   1,     1,     1,    1,    1};
+  int WH_per_level[11]=  {7, 7, 7, 7, 7, 9, 9, 9, 9, 9, 9};
                       // {300, 300, 350, 471, 653,  889, 1177, 1513, 1896, 2325, 2797}; Pre original
   
   bool valid_move;
@@ -1107,7 +1108,7 @@ void setaRandomProblem() {
   bool kick_start = false;
   bool board_side;
   bool  isfeet = false;
-  int worst_hold_allowable = 1;
+  int worst_hold_allowable = 9;
   int ms_delay=10;
   bool heel_rail = false;
   total_diff = 0;
@@ -1118,13 +1119,13 @@ void setaRandomProblem() {
   //= 300+pow((diff_level-1),1.78)*50;
     //300+(diff_level-1)*(diff_level-1)*40/sqrt(diff_level) ; // 220 + (diff_level - 1) * (diff_level - 1) * 60;
 
-  worst_hold_allowable = WH_per_level[diff_level] ; //max(1, 4 - ((diff_level + 1) / 2));
+  worst_hold_allowable = WH_per_level[diff_level] ; // Maximum allowed hold rating (1 easy .. 9 hard).
   //Serial.println("Setting a Random Problem");
   Serial.print("Level: ");
   Serial.print(diff_level);
   Serial.print("  Max Diff: ");
   Serial.println(max_difficulty);
-  Serial.println("iter|hold|nrow|ncol|diff|hrat|minh|info");
+  Serial.println("iter|hold|nrow|ncol|diff|hrat|maxh|info");
 
   board_side = random(1, 2 + 1) < 2;
 
@@ -1178,23 +1179,23 @@ void setaRandomProblem() {
 
   if (kick_start) {
   //pick_hold(irow_old, icolumn_old,            min_row, last_hold_difficulty, worst_hold_allowable, max_row, max_column    max_allow_diff, last_direction                );
-    pick_hold(2,           random(4,8+1),             -1,        3,            worst_hold_allowable,        1,          1,   min(max_difficulty,600),0, -1  );
+    pick_hold(2,           random(4,8+1),             -1,        5,            worst_hold_allowable,        1,          1,   min(max_difficulty,600),0, -1  );
     icolumn = icolumn_temp % 20;
     irow = irow_temp;
     
   } else if (heel_start) {
-    pick_hold(1,           random(2,11),      0,        3,            worst_hold_allowable,        1,          2,   min(max_difficulty,600),0 , -2  );
+    pick_hold(1,           random(2,11),      0,        5,            worst_hold_allowable,        1,          2,   min(max_difficulty,600),0 , -2  );
     icolumn = icolumn_temp % 20;
     irow = irow_temp;
   } else {
     if (board_side) {
             //pick_hold(irow_old, icolumn_old, min_row, last_hold_difficulty, worst_hold_allowable, max_row, max_column    max_allow_diff, last_direction                );
-            pick_hold(2,           random(2,5),    -1,        4,              worst_hold_allowable,       1,          2,   min(max_difficulty,600),   0 , -2 );
+            pick_hold(2,           random(2,5),    -1,        3,              worst_hold_allowable,       1,          2,   min(max_difficulty,600),   0 , -2 );
             icolumn = icolumn_temp % 20;
             irow = irow_temp;
     } else {
             //pick_hold(irow_old, icolumn_old, min_row, last_hold_difficulty, worst_hold_allowable, max_row, max_column    max_allow_diff, last_direction                );
-            pick_hold(2,           random(8,11),   -1,        4,            worst_hold_allowable,        1,          2,   min(max_difficulty,600),   0, -2  );
+            pick_hold(2,           random(8,11),   -1,        3,            worst_hold_allowable,        1,          2,   min(max_difficulty,600),   0, -2  );
             icolumn = icolumn_temp % 20;
             irow = irow_temp;
     }
@@ -1215,8 +1216,8 @@ void setaRandomProblem() {
   irand = int(random(1, 100 + 1));
   if (irand < (240 / (diff_level + 1) - 20)) {
     // pick a second start hold
-    //void pick_hold( irow_old, icolumn_old, min_row, last_hold_difficulty, min_hold_level,  max_row_move,  max_column_move,  max_allow_diff, last_direction, min_column_move)
-    pick_hold(irow_old, icolumn_old,   -1,        5,                    1,                  1,          2, min(max_difficulty,700),0,  -2 );
+    //void pick_hold( irow_old, icolumn_old, min_row, last_hold_difficulty, max_hold_level,  max_row_move,  max_column_move,  max_allow_diff, last_direction, min_column_move)
+    pick_hold(irow_old, icolumn_old,   -1,        1,                    9,                  1,          2, min(max_difficulty,700),0,  -2 );
 
     icolumn = icolumn_temp % 20;
     irow = irow_temp;
@@ -1234,12 +1235,12 @@ void setaRandomProblem() {
     //Serial.println("Adding first row hold");
     if (board_side && !kick_start) {
       //pick_hold(irow_old, icolumn_old, min_row, last_hold_difficulty, worst_hold_allowable, max_row, max_column  );
-      pick_hold(1,          3,             0,          5,                    1,                   0,       3, max_difficulty,0, -max_column );
+      pick_hold(1,          3,             0,          1,                    9,                   0,       3, max_difficulty,0, -max_column );
     } else if( !kick_start) {
-      pick_hold(1,          9,             0,          5,                    1,                   0,       3, max_difficulty ,0, -max_column );
+      pick_hold(1,          9,             0,          1,                    9,                   0,       3, max_difficulty ,0, -max_column );
 
     } else {
-      pick_hold(1,          6,             0,          5,                    1,                   0,       3, max_difficulty ,0, -max_column );
+      pick_hold(1,          6,             0,          1,                    9,                   0,       3, max_difficulty ,0, -max_column );
     }
     icolumn = icolumn_temp % 20;
     irow = irow_temp;
@@ -1270,7 +1271,7 @@ void setaRandomProblem() {
       // pick a bonus hold
       //irow_old = irow;
       //pick_hold(irow_old, icolumn_old, min_row, last_hold_difficulty, worst_hold_allowable, max_row, max_column  );
-      pick_hold(irow_old, icolumn_old,   -1,        5,                    1,                  0,          2, 1800,0, -max_column  );
+      pick_hold(irow_old, icolumn_old,   -1,        1,                    9,                  0,          2, 1800,0, -max_column  );
       bonus_hold = true;
       icolumn = icolumn_temp % 20;
       irow = irow_temp;
@@ -1341,7 +1342,7 @@ void setaRandomProblem() {
       
     }
 
-   if (((irow > random(13,15)) && (last_hold_difficulty >= worst_hold_allowable) && !bonus_hold)|| (ihold == 19)) {
+   if (((irow > random(13,15)) && (last_hold_difficulty <= worst_hold_allowable) && !bonus_hold)|| (ihold == 19)) {
      // random 13,15 should drop probability of stopping on row 14 by ~50%
       Problem_Library[ProblemNumber - 1][ihold] = 10000 + 100 * irow + icolumn_temp;
       ihold = 20;
@@ -1398,10 +1399,10 @@ int holds_in_area(int ref_row, int ref_column, int row_minus, int row_plus, int 
   return holds;
 }
 
-//void pick_hold( irow_old, icolumn_old, min_row, last_hold_difficulty, min_hold_level,  max_row_move,  max_column_move,  max_allow_diff, last_direction, min_column_move) 
+//void pick_hold( irow_old, icolumn_old, min_row, last_hold_difficulty, max_hold_level,  max_row_move,  max_column_move,  max_allow_diff, last_direction, min_column_move) 
 
 
-void pick_hold(int irow_old, int icolumn_old, int min_row, int last_hold_difficulty, int min_hold_level, int max_row_move, int max_column_move, int max_allow_diff, int last_direction, int min_column_move) {
+void pick_hold(int irow_old, int icolumn_old, int min_row, int last_hold_difficulty, int max_hold_level, int max_row_move, int max_column_move, int max_allow_diff, int last_direction, int min_column_move) {
   //finds a hold and sets icolumn_temp and irow_temp equal to the new position
   bool valid_hold = false;
   int irow;
@@ -1507,7 +1508,7 @@ void pick_hold(int irow_old, int icolumn_old, int min_row, int last_hold_difficu
     if (has_difficult_hold(hold_rating_raw)) {
       // This hold has two distinct 3-digit use definitions. Roll for difficult use.
       randi = random(1, 10) + floor(max_allow_diff / 900);
-      if (randi > 5 && min_hold_level < 2) {
+      if (randi > 5 && max_hold_level > 7) {
         harder_hold = true;
         hold_info[0] = 'H';
       }
@@ -1614,11 +1615,11 @@ void pick_hold(int irow_old, int icolumn_old, int min_row, int last_hold_difficu
       }
     }
 
-    // get rid of holds that are below min hold level but loosen if we have made a lot of attempts
-    if (( hold_rating  < min_hold_level) && (itercount < max_iterations/2)) {
+    // get rid of holds above the maximum hold rating but loosen if we have made a lot of attempts
+    if (( hold_rating > max_hold_level) && (itercount < max_iterations/2)) {
       valid_move = false;
-    } else if (((hold_rating  + 1) < min_hold_level ) && (itercount < (max_iterations + 50))) {
-      valid_move = false; // try again with 1 diff worse holds
+    } else if ((hold_rating > (max_hold_level + 2) ) && (itercount < (max_iterations + 50))) {
+      valid_move = false; // allow holds 2 rating points harder (one old-scale step)
     }
 
     // reroll if there are too many holds on the same row
@@ -1641,12 +1642,12 @@ void pick_hold(int irow_old, int icolumn_old, int min_row, int last_hold_difficu
     // get rid of easy holds IF you are on a harder difficulty
 
     if (max_allow_diff > 2100 ) {
-      if (valid_holds[irow][icolumn] % 10  > random(1, 5 + 1)) { // can reroll 3, 4, 5
+      if (valid_holds[irow][icolumn] % 10 < 11 - 2 * random(1, 5 + 1)) { // preserve original easy-hold reroll probabilities
         valid_move = false;
       }
 
     } else if (max_allow_diff > 1000) {
-      if (hold_rating  > random(3, 6 + 1)) { // can reroll 4, 5
+      if (hold_rating < 11 - 2 * random(3, 6 + 1)) { // can reroll new ratings 1 and 3 (and intermediate 2)
         valid_move = false;
       }
 
@@ -1662,7 +1663,7 @@ void pick_hold(int irow_old, int icolumn_old, int min_row, int last_hold_difficu
       
     // holds_in_area(int ref_row, int ref_column, int row_minus, int row_plus, int column_minus, int column_plus)
     // the all important move difficulty formula. 
-    move_difficulty = max(total_move_sq,2) * (pow((7 - last_hold_difficulty), 2) + pow((7 - hold_rating), 2))+ pow(5-hold_rating,2)*30-60;
+    move_difficulty = hold_move_score(total_move_sq, last_hold_difficulty, hold_rating);
 
     // check difficulty for prevous hold as well after the first two moves
     if (iset_indx>2 && max_allow_diff > 500) {
@@ -1670,7 +1671,7 @@ void pick_hold(int irow_old, int icolumn_old, int min_row, int last_hold_difficu
       int old_n_row_move = (irow - prev.row);
       int old_n_column_move = (icolumn - prev.col);
       int old_total_move_sq = (old_n_row_move * old_n_row_move*3)/2 + old_n_column_move * old_n_column_move;
-      int old_move_difficulty=max(old_total_move_sq,2) * (pow((7 - prev.difficulty), 2) + pow((7 - hold_rating), 2))+ pow(5-hold_rating,2)*30-60;
+      int old_move_difficulty=hold_move_score(old_total_move_sq, prev.difficulty, hold_rating);
 
       move_difficulty=min(move_difficulty,old_move_difficulty);
     }
@@ -1681,7 +1682,7 @@ void pick_hold(int irow_old, int icolumn_old, int min_row, int last_hold_difficu
       int old_n_row_move = (irow - prev.row);
       int old_n_column_move = (icolumn - prev.col);
       int old_total_move_sq = (old_n_row_move * old_n_row_move*3)/2 + old_n_column_move * old_n_column_move;
-      int old_move_difficulty=max(old_total_move_sq,2) * (pow((7 - prev.difficulty), 2) + pow((7 - hold_rating), 2))+ pow(5-hold_rating,2)*30-60;
+      int old_move_difficulty=hold_move_score(old_total_move_sq, prev.difficulty, hold_rating);
 
       move_difficulty=min(move_difficulty,old_move_difficulty);
     }
@@ -1779,7 +1780,7 @@ if (!isfeet){
   Serial.print("| ");
   Serial.print(hold_rating);
   Serial.print("/");
-  Serial.print(min_hold_level);
+  Serial.print(max_hold_level);
   Serial.print("| ");
   Serial.println(hold_info);
   Serial.flush();
@@ -1805,7 +1806,7 @@ void LED_drifter() {
   int min_row;
   int icolumn;
   int irow;
-  int min_hold_level = 1;
+  int max_hold_level = 9;
   int is_foot = 0;
   static int move_count;
   int n_keep = 8; // technically the index, so 5 is 6 holds, 0-5
@@ -1891,8 +1892,8 @@ void LED_drifter() {
       min_row = -5;
       max_row = -4;
       max_difficulty = 6000;
-      //pick_hold(int irow_old, int icolumn_old, int min_row, int last_hold_difficulty, int min_hold_level, int max_row_move, int max_column_move)
-      pick_hold( irow_old, icolumn_old, min_row,  5, 2, max_row, max_column, max_difficulty,0 , -max_column );
+      //pick_hold(int irow_old, int icolumn_old, int min_row, int last_hold_difficulty, int max_hold_level, int max_row_move, int max_column_move)
+      pick_hold( irow_old, icolumn_old, min_row,  1, 7, max_row, max_column, max_difficulty,0 , -max_column );
       icolumn = icolumn_temp % 20;
       irow = irow_temp;
       Problem_Library[ProblemNumber - 1][ihold] = -1 * (100 * irow + icolumn);
@@ -1923,19 +1924,19 @@ void LED_drifter() {
       }
 
       if (move_count < 15) {
-        min_hold_level = 3;
+        max_hold_level = 5;
         max_difficulty = 600;
       } else if (move_count < 30) {
-        min_hold_level = 2;
+        max_hold_level = 7;
         max_difficulty = 900;
       } else {
-        min_hold_level = 1;
+        max_hold_level = 9;
         max_difficulty = 2000;
 
       }
 
 
-      pick_hold( irow_old, icolumn_old, min_row,  last_hold_difficulty, min_hold_level, max_row, max_column, max_difficulty,0, -max_column  );
+      pick_hold( irow_old, icolumn_old, min_row,  last_hold_difficulty, max_hold_level, max_row, max_column, max_difficulty,0, -max_column  );
       icolumn = icolumn_temp % 20;
       irow = irow_temp;
 

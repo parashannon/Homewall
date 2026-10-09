@@ -1090,12 +1090,20 @@ void setaRandomProblem() {
   int n_column_move;
   int total_move_sq;
   //                        0   1     2   3     4    5   6       7     8     9     10
-  int diff_per_level[11]={0, 300, 375, 471, 653,  940, 1650, 2600, 3300, 4100, 5200};
+  int diff_per_level[11] = {
+  0, 205, 265, 340, 485, 665, 1110, 1790, 2275, 2825, 3650
+};
+                        //{0, 300, 375, 471, 653,  940, 1650, 2600, 3300, 4100, 5200}; pre 10/9/2026
                        //{300, 300, 350, 471, 653,  920, 1600, 2400, 3500, 4200, 4900}; pre 9/25/2025
                        //{300, 300, 350, 471, 653,  920, 1600, 2400, 3500, 4600, 6300};                                 
                        //{300, 300, 350, 471, 653,  889, 1350, 1813, 2200, 2700, 3300};
                        //{300, 300, 350, 471, 653,  889, 1277, 1613, 1996, 2425, 2950}; Pre 5/7/2025
-  int WH_per_level[11]=  {0, 5, 6, 6, 7, 8, 9, 9, 9, 9, 9};
+  // Main-move lower bounds, estimated from the old 5..1 score windows.
+  // Approximate calibration; tune independently from the upper bounds.
+  int min_diff_per_level[11] = {
+    0, 0, 0, 0, 105, 250, 600, 1100, 1465, 1880, 2490
+  };
+  int WH_per_level[11]=  {0, 4, 5, 6, 7, 8, 9, 9, 9, 9, 9};
                       // {300, 300, 350, 471, 653,  889, 1177, 1513, 1896, 2325, 2797}; Pre original
   
   bool valid_move;
@@ -1179,23 +1187,23 @@ void setaRandomProblem() {
 
   if (kick_start) {
   //pick_hold(irow_old, icolumn_old,            min_row, last_hold_difficulty, worst_hold_allowable, max_row, max_column    max_allow_diff, last_direction                );
-    pick_hold(2,           random(4,8+1),             -1,        5,            worst_hold_allowable,        1,          1,   min(max_difficulty,600),0, -1  );
+    pick_hold(2,           random(4,8+1),             -1,        5,            worst_hold_allowable,        1,          1,   min(max_difficulty,600),0, -1  , 0);
     icolumn = icolumn_temp % 20;
     irow = irow_temp;
     
   } else if (heel_start) {
-    pick_hold(1,           random(2,11),      0,        5,            worst_hold_allowable,        1,          2,   min(max_difficulty,600),0 , -2  );
+    pick_hold(1,           random(2,11),      0,        5,            worst_hold_allowable,        1,          2,   min(max_difficulty,600),0 , -2  , 0);
     icolumn = icolumn_temp % 20;
     irow = irow_temp;
   } else {
     if (board_side) {
             //pick_hold(irow_old, icolumn_old, min_row, last_hold_difficulty, worst_hold_allowable, max_row, max_column    max_allow_diff, last_direction                );
-            pick_hold(2,           random(2,5),    -1,        3,              worst_hold_allowable,       1,          2,   min(max_difficulty,600),   0 , -2 );
+            pick_hold(2,           random(2,5),    -1,        3,              worst_hold_allowable,       1,          2,   min(max_difficulty,600),   0 , -2 , 0);
             icolumn = icolumn_temp % 20;
             irow = irow_temp;
     } else {
             //pick_hold(irow_old, icolumn_old, min_row, last_hold_difficulty, worst_hold_allowable, max_row, max_column    max_allow_diff, last_direction                );
-            pick_hold(2,           random(8,11),   -1,        3,            worst_hold_allowable,        1,          2,   min(max_difficulty,600),   0, -2  );
+            pick_hold(2,           random(8,11),   -1,        3,            worst_hold_allowable,        1,          2,   min(max_difficulty,600),   0, -2  , 0);
             icolumn = icolumn_temp % 20;
             irow = irow_temp;
     }
@@ -1217,7 +1225,7 @@ void setaRandomProblem() {
   if (irand < (240 / (diff_level + 1) - 20)) {
     // pick a second start hold
     //void pick_hold( irow_old, icolumn_old, min_row, last_hold_difficulty, max_hold_level,  max_row_move,  max_column_move,  max_allow_diff, last_direction, min_column_move)
-    pick_hold(irow_old, icolumn_old,   -1,        1,                    9,                  1,          2, min(max_difficulty,700),0,  -2 );
+    pick_hold(irow_old, icolumn_old,   -1,        1,                    9,                  1,          2, min(max_difficulty,700),0,  -2 , 0);
 
     icolumn = icolumn_temp % 20;
     irow = irow_temp;
@@ -1229,18 +1237,29 @@ void setaRandomProblem() {
     //irow_old = irow;
   }
 
+  // Preserve the original probability for starts on row 2.
+  int start_foot_chance = constrain(240 / diff_level - 21, 0, 100);
+  // Higher starts need more foot support: level 5 gets exactly 60%.
+  if (irow_old > 2) {
+    start_foot_chance = max(start_foot_chance,
+                           constrain(400 / diff_level - 20, 0, 100));
+  }
+  // Preserve guaranteed support for low-level high starts without a heel rail.
+  if (irow_old > 2 && diff_level < 4 && !heel_rail) {
+    start_foot_chance = 100;
+  }
   irand = int(random(1, 100 + 1));
-  if ((irand < (240 / (diff_level ) - 20) && irow_old > 1) || (irow_old > 2  && diff_level < 4 && !heel_rail)) {
+  if (irow_old > 1 && irand <= start_foot_chance) {
     // pick any hold on the first row on this side of the board
     //Serial.println("Adding first row hold");
     if (board_side && !kick_start) {
       //pick_hold(irow_old, icolumn_old, min_row, last_hold_difficulty, worst_hold_allowable, max_row, max_column  );
-      pick_hold(1,          3,             0,          1,                    9,                   0,       3, max_difficulty,0, -max_column );
+      pick_hold(1,          3,             0,          1,                    9,                   0,       3, max_difficulty,0, -max_column , 0);
     } else if( !kick_start) {
-      pick_hold(1,          9,             0,          1,                    9,                   0,       3, max_difficulty ,0, -max_column );
+      pick_hold(1,          9,             0,          1,                    9,                   0,       3, max_difficulty ,0, -max_column , 0);
 
     } else {
-      pick_hold(1,          6,             0,          1,                    9,                   0,       3, max_difficulty ,0, -max_column );
+      pick_hold(1,          6,             0,          1,                    9,                   0,       3, max_difficulty ,0, -max_column , 0);
     }
     icolumn = icolumn_temp % 20;
     irow = irow_temp;
@@ -1271,7 +1290,7 @@ void setaRandomProblem() {
       // pick a bonus hold
       //irow_old = irow;
       //pick_hold(irow_old, icolumn_old, min_row, last_hold_difficulty, worst_hold_allowable, max_row, max_column  );
-      pick_hold(irow_old, icolumn_old,   -1,        1,                    9,                  0,          2, 1800,0, -max_column  );
+      pick_hold(irow_old, icolumn_old,   -1,        1,                    9,                  0,          2, 1800,0, -max_column  , 1000);
       bonus_hold = true;
       icolumn = icolumn_temp % 20;
       irow = irow_temp;
@@ -1319,7 +1338,7 @@ void setaRandomProblem() {
         current_max_difficulty=max_difficulty;
       }
   
-      pick_hold(irow_old, icolumn_old, min_row, last_hold_difficulty, worst_hold_allowable, max_row, max_column, current_max_difficulty,last_direction,-max_column );
+      pick_hold(irow_old, icolumn_old, min_row, last_hold_difficulty, worst_hold_allowable, max_row, max_column, current_max_difficulty,last_direction,-max_column , min_diff_per_level[diff_level]);
       
       last_direction=icolumn_temp%20-icolumn_old;
       last_delta_row=irow_temp-irow_old;
@@ -1402,7 +1421,7 @@ int holds_in_area(int ref_row, int ref_column, int row_minus, int row_plus, int 
 //void pick_hold( irow_old, icolumn_old, min_row, last_hold_difficulty, max_hold_level,  max_row_move,  max_column_move,  max_allow_diff, last_direction, min_column_move) 
 
 
-void pick_hold(int irow_old, int icolumn_old, int min_row, int last_hold_difficulty, int max_hold_level, int max_row_move, int max_column_move, int max_allow_diff, int last_direction, int min_column_move) {
+void pick_hold(int irow_old, int icolumn_old, int min_row, int last_hold_difficulty, int max_hold_level, int max_row_move, int max_column_move, int max_allow_diff, int last_direction, int min_column_move, int min_allow_diff) {
   //finds a hold and sets icolumn_temp and irow_temp equal to the new position
   bool valid_hold = false;
   int irow;
@@ -1431,7 +1450,7 @@ void pick_hold(int irow_old, int icolumn_old, int min_row, int last_hold_difficu
   int testint;
   bool old_holds=false;
   int  pick_count=0;
-  int min_move_diff=0;
+  const int min_move_diff = min_allow_diff;
   
   itercount = 1;
 // create a list of all valid moves and count them
@@ -1748,13 +1767,7 @@ if (!isfeet){
     
     // 
     if (valid_move) {
-     // if (max_allow_diff<2000){
-      //  min_move_diff=((max_allow_diff*2 )/5 - 300);
-      //} else {
-      //  min_move_diff=((max_allow_diff*3 )/5 - 300);
-      //}
-      min_move_diff=max_allow_diff-(max_allow_diff+1400)/4;
-      
+      // Explicit caller-supplied lower bound; existing retry relaxation remains.
       if ((move_difficulty > max_allow_diff || move_difficulty < min_move_diff)  && itercount < max_iterations) {
         valid_move = false;
       } else if (move_difficulty > max_allow_diff * 2  && itercount < max_iterations + 100) {
@@ -1893,7 +1906,7 @@ void LED_drifter() {
       max_row = -4;
       max_difficulty = 6000;
       //pick_hold(int irow_old, int icolumn_old, int min_row, int last_hold_difficulty, int max_hold_level, int max_row_move, int max_column_move)
-      pick_hold( irow_old, icolumn_old, min_row,  1, 7, max_row, max_column, max_difficulty,0 , -max_column );
+      pick_hold( irow_old, icolumn_old, min_row,  1, 7, max_row, max_column, max_difficulty,0 , -max_column , 4150);
       icolumn = icolumn_temp % 20;
       irow = irow_temp;
       Problem_Library[ProblemNumber - 1][ihold] = -1 * (100 * irow + icolumn);
@@ -1923,20 +1936,24 @@ void LED_drifter() {
 
       }
 
+      int drifter_min_difficulty;
       if (move_count < 15) {
         max_hold_level = 5;
         max_difficulty = 600;
+        drifter_min_difficulty = 100;
       } else if (move_count < 30) {
         max_hold_level = 7;
         max_difficulty = 900;
+        drifter_min_difficulty = 325;
       } else {
         max_hold_level = 9;
         max_difficulty = 2000;
+        drifter_min_difficulty = 1150;
 
       }
 
 
-      pick_hold( irow_old, icolumn_old, min_row,  last_hold_difficulty, max_hold_level, max_row, max_column, max_difficulty,0, -max_column  );
+      pick_hold( irow_old, icolumn_old, min_row,  last_hold_difficulty, max_hold_level, max_row, max_column, max_difficulty,0, -max_column  , drifter_min_difficulty);
       icolumn = icolumn_temp % 20;
       irow = irow_temp;
 

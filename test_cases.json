@@ -1,0 +1,2584 @@
+{
+  "schema_version": 1,
+  "description": "40 fixed pilot cases. Review physical usability first; labels are not predicted grades. Edit hand/beta to prescribe gastons. Rail conditions may be impractical on some moves.",
+  "cases": [
+    {
+      "id": "T001",
+      "starts": [
+        405
+      ],
+      "target": 504,
+      "feet": [
+        204,
+        208
+      ],
+      "rails": [],
+      "difficulty_score": 300,
+      "score_model": "base_only_no_feet_direction_or_rail_modifiers",
+      "matching_levels": [
+        4,
+        5
+      ],
+      "level_match_rule": "score_window_and_target_hold_limit_only; not full geometric eligibility",
+      "from_rating": 6,
+      "to_rating": 7,
+      "weighted_distance_squared": 2,
+      "level_min": [
+        0,
+        0,
+        0,
+        0,
+        105,
+        250,
+        600,
+        1100,
+        1465,
+        1880,
+        2490
+      ],
+      "level_max": [
+        0,
+        205,
+        265,
+        340,
+        485,
+        665,
+        1110,
+        1790,
+        2275,
+        2825,
+        3650
+      ],
+      "level_worst": [
+        0,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        9,
+        9,
+        9,
+        9
+      ],
+      "tags": [
+        "two_feet",
+        "baseline"
+      ],
+      "instructions": "Start matched on cyan. Move your right hand to pink and hold for 2 seconds; left hand stays on cyan. Use only listed feet/rails for feet, no unlit holds or floor. Establish the start with assistance if needed. Record any changed beta in the note."
+    },
+    {
+      "id": "T002",
+      "starts": [
+        405
+      ],
+      "target": 504,
+      "feet": [
+        204
+      ],
+      "rails": [],
+      "difficulty_score": 300,
+      "score_model": "base_only_no_feet_direction_or_rail_modifiers",
+      "matching_levels": [
+        4,
+        5
+      ],
+      "level_match_rule": "score_window_and_target_hold_limit_only; not full geometric eligibility",
+      "from_rating": 6,
+      "to_rating": 7,
+      "weighted_distance_squared": 2,
+      "level_min": [
+        0,
+        0,
+        0,
+        0,
+        105,
+        250,
+        600,
+        1100,
+        1465,
+        1880,
+        2490
+      ],
+      "level_max": [
+        0,
+        205,
+        265,
+        340,
+        485,
+        665,
+        1110,
+        1790,
+        2275,
+        2825,
+        3650
+      ],
+      "level_worst": [
+        0,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        9,
+        9,
+        9,
+        9
+      ],
+      "tags": [
+        "one_foot",
+        "baseline"
+      ],
+      "instructions": "Start matched on cyan. Move your right hand to pink and hold for 2 seconds; left hand stays on cyan. Use only listed feet/rails for feet, no unlit holds or floor. Establish the start with assistance if needed. Record any changed beta in the note."
+    },
+    {
+      "id": "T003",
+      "starts": [
+        405
+      ],
+      "target": 504,
+      "feet": [],
+      "rails": [
+        "left"
+      ],
+      "difficulty_score": 300,
+      "score_model": "base_only_no_feet_direction_or_rail_modifiers",
+      "matching_levels": [
+        4,
+        5
+      ],
+      "level_match_rule": "score_window_and_target_hold_limit_only; not full geometric eligibility",
+      "from_rating": 6,
+      "to_rating": 7,
+      "weighted_distance_squared": 2,
+      "level_min": [
+        0,
+        0,
+        0,
+        0,
+        105,
+        250,
+        600,
+        1100,
+        1465,
+        1880,
+        2490
+      ],
+      "level_max": [
+        0,
+        205,
+        265,
+        340,
+        485,
+        665,
+        1110,
+        1790,
+        2275,
+        2825,
+        3650
+      ],
+      "level_worst": [
+        0,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        9,
+        9,
+        9,
+        9
+      ],
+      "tags": [
+        "left_rail",
+        "baseline"
+      ],
+      "instructions": "Start matched on cyan. Move your right hand to pink and hold for 2 seconds; left hand stays on cyan. Use only listed feet/rails for feet, no unlit holds or floor. Establish the start with assistance if needed. Record any changed beta in the note."
+    },
+    {
+      "id": "T004",
+      "starts": [
+        405
+      ],
+      "target": 504,
+      "feet": [],
+      "rails": [],
+      "difficulty_score": 300,
+      "score_model": "base_only_no_feet_direction_or_rail_modifiers",
+      "matching_levels": [
+        4,
+        5
+      ],
+      "level_match_rule": "score_window_and_target_hold_limit_only; not full geometric eligibility",
+      "from_rating": 6,
+      "to_rating": 7,
+      "weighted_distance_squared": 2,
+      "level_min": [
+        0,
+        0,
+        0,
+        0,
+        105,
+        250,
+        600,
+        1100,
+        1465,
+        1880,
+        2490
+      ],
+      "level_max": [
+        0,
+        205,
+        265,
+        340,
+        485,
+        665,
+        1110,
+        1790,
+        2275,
+        2825,
+        3650
+      ],
+      "level_worst": [
+        0,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        9,
+        9,
+        9,
+        9
+      ],
+      "tags": [
+        "no_feet",
+        "baseline"
+      ],
+      "instructions": "Start matched on cyan. Move your right hand to pink and hold for 2 seconds; left hand stays on cyan. Use only listed feet/rails for feet, no unlit holds or floor. Establish the start with assistance if needed. Record any changed beta in the note."
+    },
+    {
+      "id": "T005",
+      "starts": [
+        405
+      ],
+      "target": 606,
+      "feet": [
+        204,
+        208
+      ],
+      "rails": [],
+      "difficulty_score": 411,
+      "score_model": "base_only_no_feet_direction_or_rail_modifiers",
+      "matching_levels": [
+        4,
+        5
+      ],
+      "level_match_rule": "score_window_and_target_hold_limit_only; not full geometric eligibility",
+      "from_rating": 6,
+      "to_rating": 6,
+      "weighted_distance_squared": 7,
+      "level_min": [
+        0,
+        0,
+        0,
+        0,
+        105,
+        250,
+        600,
+        1100,
+        1465,
+        1880,
+        2490
+      ],
+      "level_max": [
+        0,
+        205,
+        265,
+        340,
+        485,
+        665,
+        1110,
+        1790,
+        2275,
+        2825,
+        3650
+      ],
+      "level_worst": [
+        0,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        9,
+        9,
+        9,
+        9
+      ],
+      "tags": [
+        "two_feet",
+        "baseline"
+      ],
+      "instructions": "Start matched on cyan. Move your right hand to pink and hold for 2 seconds; left hand stays on cyan. Use only listed feet/rails for feet, no unlit holds or floor. Establish the start with assistance if needed. Record any changed beta in the note."
+    },
+    {
+      "id": "T006",
+      "starts": [
+        405
+      ],
+      "target": 606,
+      "feet": [
+        204
+      ],
+      "rails": [],
+      "difficulty_score": 411,
+      "score_model": "base_only_no_feet_direction_or_rail_modifiers",
+      "matching_levels": [
+        4,
+        5
+      ],
+      "level_match_rule": "score_window_and_target_hold_limit_only; not full geometric eligibility",
+      "from_rating": 6,
+      "to_rating": 6,
+      "weighted_distance_squared": 7,
+      "level_min": [
+        0,
+        0,
+        0,
+        0,
+        105,
+        250,
+        600,
+        1100,
+        1465,
+        1880,
+        2490
+      ],
+      "level_max": [
+        0,
+        205,
+        265,
+        340,
+        485,
+        665,
+        1110,
+        1790,
+        2275,
+        2825,
+        3650
+      ],
+      "level_worst": [
+        0,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        9,
+        9,
+        9,
+        9
+      ],
+      "tags": [
+        "one_foot",
+        "baseline"
+      ],
+      "instructions": "Start matched on cyan. Move your right hand to pink and hold for 2 seconds; left hand stays on cyan. Use only listed feet/rails for feet, no unlit holds or floor. Establish the start with assistance if needed. Record any changed beta in the note."
+    },
+    {
+      "id": "T007",
+      "starts": [
+        405
+      ],
+      "target": 606,
+      "feet": [],
+      "rails": [
+        "left"
+      ],
+      "difficulty_score": 411,
+      "score_model": "base_only_no_feet_direction_or_rail_modifiers",
+      "matching_levels": [
+        4,
+        5
+      ],
+      "level_match_rule": "score_window_and_target_hold_limit_only; not full geometric eligibility",
+      "from_rating": 6,
+      "to_rating": 6,
+      "weighted_distance_squared": 7,
+      "level_min": [
+        0,
+        0,
+        0,
+        0,
+        105,
+        250,
+        600,
+        1100,
+        1465,
+        1880,
+        2490
+      ],
+      "level_max": [
+        0,
+        205,
+        265,
+        340,
+        485,
+        665,
+        1110,
+        1790,
+        2275,
+        2825,
+        3650
+      ],
+      "level_worst": [
+        0,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        9,
+        9,
+        9,
+        9
+      ],
+      "tags": [
+        "left_rail",
+        "baseline"
+      ],
+      "instructions": "Start matched on cyan. Move your right hand to pink and hold for 2 seconds; left hand stays on cyan. Use only listed feet/rails for feet, no unlit holds or floor. Establish the start with assistance if needed. Record any changed beta in the note."
+    },
+    {
+      "id": "T008",
+      "starts": [
+        405
+      ],
+      "target": 606,
+      "feet": [],
+      "rails": [],
+      "difficulty_score": 411,
+      "score_model": "base_only_no_feet_direction_or_rail_modifiers",
+      "matching_levels": [
+        4,
+        5
+      ],
+      "level_match_rule": "score_window_and_target_hold_limit_only; not full geometric eligibility",
+      "from_rating": 6,
+      "to_rating": 6,
+      "weighted_distance_squared": 7,
+      "level_min": [
+        0,
+        0,
+        0,
+        0,
+        105,
+        250,
+        600,
+        1100,
+        1465,
+        1880,
+        2490
+      ],
+      "level_max": [
+        0,
+        205,
+        265,
+        340,
+        485,
+        665,
+        1110,
+        1790,
+        2275,
+        2825,
+        3650
+      ],
+      "level_worst": [
+        0,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        9,
+        9,
+        9,
+        9
+      ],
+      "tags": [
+        "no_feet",
+        "baseline"
+      ],
+      "instructions": "Start matched on cyan. Move your right hand to pink and hold for 2 seconds; left hand stays on cyan. Use only listed feet/rails for feet, no unlit holds or floor. Establish the start with assistance if needed. Record any changed beta in the note."
+    },
+    {
+      "id": "T009",
+      "starts": [
+        504
+      ],
+      "target": 703,
+      "feet": [
+        204,
+        208
+      ],
+      "rails": [],
+      "difficulty_score": 268,
+      "score_model": "base_only_no_feet_direction_or_rail_modifiers",
+      "matching_levels": [
+        3,
+        4,
+        5
+      ],
+      "level_match_rule": "score_window_and_target_hold_limit_only; not full geometric eligibility",
+      "from_rating": 7,
+      "to_rating": 4,
+      "weighted_distance_squared": 7,
+      "level_min": [
+        0,
+        0,
+        0,
+        0,
+        105,
+        250,
+        600,
+        1100,
+        1465,
+        1880,
+        2490
+      ],
+      "level_max": [
+        0,
+        205,
+        265,
+        340,
+        485,
+        665,
+        1110,
+        1790,
+        2275,
+        2825,
+        3650
+      ],
+      "level_worst": [
+        0,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        9,
+        9,
+        9,
+        9
+      ],
+      "tags": [
+        "two_feet",
+        "directional_candidate"
+      ],
+      "instructions": "Start matched on cyan. Move your right hand to pink and hold for 2 seconds; left hand stays on cyan. Use only listed feet/rails for feet, no unlit holds or floor. Establish the start with assistance if needed. Record any changed beta in the note."
+    },
+    {
+      "id": "T010",
+      "starts": [
+        504
+      ],
+      "target": 703,
+      "feet": [
+        204
+      ],
+      "rails": [],
+      "difficulty_score": 268,
+      "score_model": "base_only_no_feet_direction_or_rail_modifiers",
+      "matching_levels": [
+        3,
+        4,
+        5
+      ],
+      "level_match_rule": "score_window_and_target_hold_limit_only; not full geometric eligibility",
+      "from_rating": 7,
+      "to_rating": 4,
+      "weighted_distance_squared": 7,
+      "level_min": [
+        0,
+        0,
+        0,
+        0,
+        105,
+        250,
+        600,
+        1100,
+        1465,
+        1880,
+        2490
+      ],
+      "level_max": [
+        0,
+        205,
+        265,
+        340,
+        485,
+        665,
+        1110,
+        1790,
+        2275,
+        2825,
+        3650
+      ],
+      "level_worst": [
+        0,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        9,
+        9,
+        9,
+        9
+      ],
+      "tags": [
+        "one_foot",
+        "directional_candidate"
+      ],
+      "instructions": "Start matched on cyan. Move your right hand to pink and hold for 2 seconds; left hand stays on cyan. Use only listed feet/rails for feet, no unlit holds or floor. Establish the start with assistance if needed. Record any changed beta in the note."
+    },
+    {
+      "id": "T011",
+      "starts": [
+        504
+      ],
+      "target": 703,
+      "feet": [],
+      "rails": [
+        "left"
+      ],
+      "difficulty_score": 268,
+      "score_model": "base_only_no_feet_direction_or_rail_modifiers",
+      "matching_levels": [
+        3,
+        4,
+        5
+      ],
+      "level_match_rule": "score_window_and_target_hold_limit_only; not full geometric eligibility",
+      "from_rating": 7,
+      "to_rating": 4,
+      "weighted_distance_squared": 7,
+      "level_min": [
+        0,
+        0,
+        0,
+        0,
+        105,
+        250,
+        600,
+        1100,
+        1465,
+        1880,
+        2490
+      ],
+      "level_max": [
+        0,
+        205,
+        265,
+        340,
+        485,
+        665,
+        1110,
+        1790,
+        2275,
+        2825,
+        3650
+      ],
+      "level_worst": [
+        0,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        9,
+        9,
+        9,
+        9
+      ],
+      "tags": [
+        "left_rail",
+        "directional_candidate"
+      ],
+      "instructions": "Start matched on cyan. Move your right hand to pink and hold for 2 seconds; left hand stays on cyan. Use only listed feet/rails for feet, no unlit holds or floor. Establish the start with assistance if needed. Record any changed beta in the note."
+    },
+    {
+      "id": "T012",
+      "starts": [
+        504
+      ],
+      "target": 703,
+      "feet": [],
+      "rails": [],
+      "difficulty_score": 268,
+      "score_model": "base_only_no_feet_direction_or_rail_modifiers",
+      "matching_levels": [
+        3,
+        4,
+        5
+      ],
+      "level_match_rule": "score_window_and_target_hold_limit_only; not full geometric eligibility",
+      "from_rating": 7,
+      "to_rating": 4,
+      "weighted_distance_squared": 7,
+      "level_min": [
+        0,
+        0,
+        0,
+        0,
+        105,
+        250,
+        600,
+        1100,
+        1465,
+        1880,
+        2490
+      ],
+      "level_max": [
+        0,
+        205,
+        265,
+        340,
+        485,
+        665,
+        1110,
+        1790,
+        2275,
+        2825,
+        3650
+      ],
+      "level_worst": [
+        0,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        9,
+        9,
+        9,
+        9
+      ],
+      "tags": [
+        "no_feet",
+        "directional_candidate"
+      ],
+      "instructions": "Start matched on cyan. Move your right hand to pink and hold for 2 seconds; left hand stays on cyan. Use only listed feet/rails for feet, no unlit holds or floor. Establish the start with assistance if needed. Record any changed beta in the note."
+    },
+    {
+      "id": "T013",
+      "starts": [
+        604
+      ],
+      "target": 805,
+      "feet": [
+        204,
+        208
+      ],
+      "rails": [],
+      "difficulty_score": 661,
+      "score_model": "base_only_no_feet_direction_or_rail_modifiers",
+      "matching_levels": [
+        5,
+        6
+      ],
+      "level_match_rule": "score_window_and_target_hold_limit_only; not full geometric eligibility",
+      "from_rating": 6,
+      "to_rating": 8,
+      "weighted_distance_squared": 7,
+      "level_min": [
+        0,
+        0,
+        0,
+        0,
+        105,
+        250,
+        600,
+        1100,
+        1465,
+        1880,
+        2490
+      ],
+      "level_max": [
+        0,
+        205,
+        265,
+        340,
+        485,
+        665,
+        1110,
+        1790,
+        2275,
+        2825,
+        3650
+      ],
+      "level_worst": [
+        0,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        9,
+        9,
+        9,
+        9
+      ],
+      "tags": [
+        "two_feet",
+        "baseline"
+      ],
+      "instructions": "Start matched on cyan. Move your right hand to pink and hold for 2 seconds; left hand stays on cyan. Use only listed feet/rails for feet, no unlit holds or floor. Establish the start with assistance if needed. Record any changed beta in the note."
+    },
+    {
+      "id": "T014",
+      "starts": [
+        604
+      ],
+      "target": 805,
+      "feet": [
+        204
+      ],
+      "rails": [],
+      "difficulty_score": 661,
+      "score_model": "base_only_no_feet_direction_or_rail_modifiers",
+      "matching_levels": [
+        5,
+        6
+      ],
+      "level_match_rule": "score_window_and_target_hold_limit_only; not full geometric eligibility",
+      "from_rating": 6,
+      "to_rating": 8,
+      "weighted_distance_squared": 7,
+      "level_min": [
+        0,
+        0,
+        0,
+        0,
+        105,
+        250,
+        600,
+        1100,
+        1465,
+        1880,
+        2490
+      ],
+      "level_max": [
+        0,
+        205,
+        265,
+        340,
+        485,
+        665,
+        1110,
+        1790,
+        2275,
+        2825,
+        3650
+      ],
+      "level_worst": [
+        0,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        9,
+        9,
+        9,
+        9
+      ],
+      "tags": [
+        "one_foot",
+        "baseline"
+      ],
+      "instructions": "Start matched on cyan. Move your right hand to pink and hold for 2 seconds; left hand stays on cyan. Use only listed feet/rails for feet, no unlit holds or floor. Establish the start with assistance if needed. Record any changed beta in the note."
+    },
+    {
+      "id": "T015",
+      "starts": [
+        604
+      ],
+      "target": 805,
+      "feet": [],
+      "rails": [
+        "left"
+      ],
+      "difficulty_score": 661,
+      "score_model": "base_only_no_feet_direction_or_rail_modifiers",
+      "matching_levels": [
+        5,
+        6
+      ],
+      "level_match_rule": "score_window_and_target_hold_limit_only; not full geometric eligibility",
+      "from_rating": 6,
+      "to_rating": 8,
+      "weighted_distance_squared": 7,
+      "level_min": [
+        0,
+        0,
+        0,
+        0,
+        105,
+        250,
+        600,
+        1100,
+        1465,
+        1880,
+        2490
+      ],
+      "level_max": [
+        0,
+        205,
+        265,
+        340,
+        485,
+        665,
+        1110,
+        1790,
+        2275,
+        2825,
+        3650
+      ],
+      "level_worst": [
+        0,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        9,
+        9,
+        9,
+        9
+      ],
+      "tags": [
+        "left_rail",
+        "baseline"
+      ],
+      "instructions": "Start matched on cyan. Move your right hand to pink and hold for 2 seconds; left hand stays on cyan. Use only listed feet/rails for feet, no unlit holds or floor. Establish the start with assistance if needed. Record any changed beta in the note."
+    },
+    {
+      "id": "T016",
+      "starts": [
+        604
+      ],
+      "target": 805,
+      "feet": [],
+      "rails": [],
+      "difficulty_score": 661,
+      "score_model": "base_only_no_feet_direction_or_rail_modifiers",
+      "matching_levels": [
+        5,
+        6
+      ],
+      "level_match_rule": "score_window_and_target_hold_limit_only; not full geometric eligibility",
+      "from_rating": 6,
+      "to_rating": 8,
+      "weighted_distance_squared": 7,
+      "level_min": [
+        0,
+        0,
+        0,
+        0,
+        105,
+        250,
+        600,
+        1100,
+        1465,
+        1880,
+        2490
+      ],
+      "level_max": [
+        0,
+        205,
+        265,
+        340,
+        485,
+        665,
+        1110,
+        1790,
+        2275,
+        2825,
+        3650
+      ],
+      "level_worst": [
+        0,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        9,
+        9,
+        9,
+        9
+      ],
+      "tags": [
+        "no_feet",
+        "baseline"
+      ],
+      "instructions": "Start matched on cyan. Move your right hand to pink and hold for 2 seconds; left hand stays on cyan. Use only listed feet/rails for feet, no unlit holds or floor. Establish the start with assistance if needed. Record any changed beta in the note."
+    },
+    {
+      "id": "T017",
+      "starts": [
+        703
+      ],
+      "target": 1003,
+      "feet": [
+        204,
+        208
+      ],
+      "rails": [],
+      "difficulty_score": 694,
+      "score_model": "base_only_no_feet_direction_or_rail_modifiers",
+      "matching_levels": [
+        6
+      ],
+      "level_match_rule": "score_window_and_target_hold_limit_only; not full geometric eligibility",
+      "from_rating": 4,
+      "to_rating": 7,
+      "weighted_distance_squared": 13,
+      "level_min": [
+        0,
+        0,
+        0,
+        0,
+        105,
+        250,
+        600,
+        1100,
+        1465,
+        1880,
+        2490
+      ],
+      "level_max": [
+        0,
+        205,
+        265,
+        340,
+        485,
+        665,
+        1110,
+        1790,
+        2275,
+        2825,
+        3650
+      ],
+      "level_worst": [
+        0,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        9,
+        9,
+        9,
+        9
+      ],
+      "tags": [
+        "two_feet",
+        "directional_candidate"
+      ],
+      "instructions": "Start matched on cyan. Move your right hand to pink and hold for 2 seconds; left hand stays on cyan. Use only listed feet/rails for feet, no unlit holds or floor. Establish the start with assistance if needed. Record any changed beta in the note."
+    },
+    {
+      "id": "T018",
+      "starts": [
+        703
+      ],
+      "target": 1003,
+      "feet": [
+        204
+      ],
+      "rails": [],
+      "difficulty_score": 694,
+      "score_model": "base_only_no_feet_direction_or_rail_modifiers",
+      "matching_levels": [
+        6
+      ],
+      "level_match_rule": "score_window_and_target_hold_limit_only; not full geometric eligibility",
+      "from_rating": 4,
+      "to_rating": 7,
+      "weighted_distance_squared": 13,
+      "level_min": [
+        0,
+        0,
+        0,
+        0,
+        105,
+        250,
+        600,
+        1100,
+        1465,
+        1880,
+        2490
+      ],
+      "level_max": [
+        0,
+        205,
+        265,
+        340,
+        485,
+        665,
+        1110,
+        1790,
+        2275,
+        2825,
+        3650
+      ],
+      "level_worst": [
+        0,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        9,
+        9,
+        9,
+        9
+      ],
+      "tags": [
+        "one_foot",
+        "directional_candidate"
+      ],
+      "instructions": "Start matched on cyan. Move your right hand to pink and hold for 2 seconds; left hand stays on cyan. Use only listed feet/rails for feet, no unlit holds or floor. Establish the start with assistance if needed. Record any changed beta in the note."
+    },
+    {
+      "id": "T019",
+      "starts": [
+        703
+      ],
+      "target": 1003,
+      "feet": [],
+      "rails": [
+        "left"
+      ],
+      "difficulty_score": 694,
+      "score_model": "base_only_no_feet_direction_or_rail_modifiers",
+      "matching_levels": [
+        6
+      ],
+      "level_match_rule": "score_window_and_target_hold_limit_only; not full geometric eligibility",
+      "from_rating": 4,
+      "to_rating": 7,
+      "weighted_distance_squared": 13,
+      "level_min": [
+        0,
+        0,
+        0,
+        0,
+        105,
+        250,
+        600,
+        1100,
+        1465,
+        1880,
+        2490
+      ],
+      "level_max": [
+        0,
+        205,
+        265,
+        340,
+        485,
+        665,
+        1110,
+        1790,
+        2275,
+        2825,
+        3650
+      ],
+      "level_worst": [
+        0,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        9,
+        9,
+        9,
+        9
+      ],
+      "tags": [
+        "left_rail",
+        "directional_candidate"
+      ],
+      "instructions": "Start matched on cyan. Move your right hand to pink and hold for 2 seconds; left hand stays on cyan. Use only listed feet/rails for feet, no unlit holds or floor. Establish the start with assistance if needed. Record any changed beta in the note."
+    },
+    {
+      "id": "T020",
+      "starts": [
+        703
+      ],
+      "target": 1003,
+      "feet": [],
+      "rails": [],
+      "difficulty_score": 694,
+      "score_model": "base_only_no_feet_direction_or_rail_modifiers",
+      "matching_levels": [
+        6
+      ],
+      "level_match_rule": "score_window_and_target_hold_limit_only; not full geometric eligibility",
+      "from_rating": 4,
+      "to_rating": 7,
+      "weighted_distance_squared": 13,
+      "level_min": [
+        0,
+        0,
+        0,
+        0,
+        105,
+        250,
+        600,
+        1100,
+        1465,
+        1880,
+        2490
+      ],
+      "level_max": [
+        0,
+        205,
+        265,
+        340,
+        485,
+        665,
+        1110,
+        1790,
+        2275,
+        2825,
+        3650
+      ],
+      "level_worst": [
+        0,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        9,
+        9,
+        9,
+        9
+      ],
+      "tags": [
+        "no_feet",
+        "directional_candidate"
+      ],
+      "instructions": "Start matched on cyan. Move your right hand to pink and hold for 2 seconds; left hand stays on cyan. Use only listed feet/rails for feet, no unlit holds or floor. Establish the start with assistance if needed. Record any changed beta in the note."
+    },
+    {
+      "id": "T021",
+      "starts": [
+        704
+      ],
+      "target": 903,
+      "feet": [
+        204,
+        208
+      ],
+      "rails": [],
+      "difficulty_score": 96,
+      "score_model": "base_only_no_feet_direction_or_rail_modifiers",
+      "matching_levels": [
+        1,
+        2,
+        3
+      ],
+      "level_match_rule": "score_window_and_target_hold_limit_only; not full geometric eligibility",
+      "from_rating": 3,
+      "to_rating": 3,
+      "weighted_distance_squared": 7,
+      "level_min": [
+        0,
+        0,
+        0,
+        0,
+        105,
+        250,
+        600,
+        1100,
+        1465,
+        1880,
+        2490
+      ],
+      "level_max": [
+        0,
+        205,
+        265,
+        340,
+        485,
+        665,
+        1110,
+        1790,
+        2275,
+        2825,
+        3650
+      ],
+      "level_worst": [
+        0,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        9,
+        9,
+        9,
+        9
+      ],
+      "tags": [
+        "two_feet",
+        "directional_candidate"
+      ],
+      "instructions": "Start matched on cyan. Move your right hand to pink and hold for 2 seconds; left hand stays on cyan. Use only listed feet/rails for feet, no unlit holds or floor. Establish the start with assistance if needed. Record any changed beta in the note."
+    },
+    {
+      "id": "T022",
+      "starts": [
+        704
+      ],
+      "target": 903,
+      "feet": [
+        204
+      ],
+      "rails": [],
+      "difficulty_score": 96,
+      "score_model": "base_only_no_feet_direction_or_rail_modifiers",
+      "matching_levels": [
+        1,
+        2,
+        3
+      ],
+      "level_match_rule": "score_window_and_target_hold_limit_only; not full geometric eligibility",
+      "from_rating": 3,
+      "to_rating": 3,
+      "weighted_distance_squared": 7,
+      "level_min": [
+        0,
+        0,
+        0,
+        0,
+        105,
+        250,
+        600,
+        1100,
+        1465,
+        1880,
+        2490
+      ],
+      "level_max": [
+        0,
+        205,
+        265,
+        340,
+        485,
+        665,
+        1110,
+        1790,
+        2275,
+        2825,
+        3650
+      ],
+      "level_worst": [
+        0,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        9,
+        9,
+        9,
+        9
+      ],
+      "tags": [
+        "one_foot",
+        "directional_candidate"
+      ],
+      "instructions": "Start matched on cyan. Move your right hand to pink and hold for 2 seconds; left hand stays on cyan. Use only listed feet/rails for feet, no unlit holds or floor. Establish the start with assistance if needed. Record any changed beta in the note."
+    },
+    {
+      "id": "T023",
+      "starts": [
+        704
+      ],
+      "target": 903,
+      "feet": [],
+      "rails": [
+        "left"
+      ],
+      "difficulty_score": 96,
+      "score_model": "base_only_no_feet_direction_or_rail_modifiers",
+      "matching_levels": [
+        1,
+        2,
+        3
+      ],
+      "level_match_rule": "score_window_and_target_hold_limit_only; not full geometric eligibility",
+      "from_rating": 3,
+      "to_rating": 3,
+      "weighted_distance_squared": 7,
+      "level_min": [
+        0,
+        0,
+        0,
+        0,
+        105,
+        250,
+        600,
+        1100,
+        1465,
+        1880,
+        2490
+      ],
+      "level_max": [
+        0,
+        205,
+        265,
+        340,
+        485,
+        665,
+        1110,
+        1790,
+        2275,
+        2825,
+        3650
+      ],
+      "level_worst": [
+        0,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        9,
+        9,
+        9,
+        9
+      ],
+      "tags": [
+        "left_rail",
+        "directional_candidate"
+      ],
+      "instructions": "Start matched on cyan. Move your right hand to pink and hold for 2 seconds; left hand stays on cyan. Use only listed feet/rails for feet, no unlit holds or floor. Establish the start with assistance if needed. Record any changed beta in the note."
+    },
+    {
+      "id": "T024",
+      "starts": [
+        704
+      ],
+      "target": 903,
+      "feet": [],
+      "rails": [],
+      "difficulty_score": 96,
+      "score_model": "base_only_no_feet_direction_or_rail_modifiers",
+      "matching_levels": [
+        1,
+        2,
+        3
+      ],
+      "level_match_rule": "score_window_and_target_hold_limit_only; not full geometric eligibility",
+      "from_rating": 3,
+      "to_rating": 3,
+      "weighted_distance_squared": 7,
+      "level_min": [
+        0,
+        0,
+        0,
+        0,
+        105,
+        250,
+        600,
+        1100,
+        1465,
+        1880,
+        2490
+      ],
+      "level_max": [
+        0,
+        205,
+        265,
+        340,
+        485,
+        665,
+        1110,
+        1790,
+        2275,
+        2825,
+        3650
+      ],
+      "level_worst": [
+        0,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        9,
+        9,
+        9,
+        9
+      ],
+      "tags": [
+        "no_feet",
+        "directional_candidate"
+      ],
+      "instructions": "Start matched on cyan. Move your right hand to pink and hold for 2 seconds; left hand stays on cyan. Use only listed feet/rails for feet, no unlit holds or floor. Establish the start with assistance if needed. Record any changed beta in the note."
+    },
+    {
+      "id": "T025",
+      "starts": [
+        805
+      ],
+      "target": 1003,
+      "feet": [
+        404,
+        408
+      ],
+      "rails": [],
+      "difficulty_score": 762,
+      "score_model": "base_only_no_feet_direction_or_rail_modifiers",
+      "matching_levels": [
+        6
+      ],
+      "level_match_rule": "score_window_and_target_hold_limit_only; not full geometric eligibility",
+      "from_rating": 8,
+      "to_rating": 7,
+      "weighted_distance_squared": 10,
+      "level_min": [
+        0,
+        0,
+        0,
+        0,
+        105,
+        250,
+        600,
+        1100,
+        1465,
+        1880,
+        2490
+      ],
+      "level_max": [
+        0,
+        205,
+        265,
+        340,
+        485,
+        665,
+        1110,
+        1790,
+        2275,
+        2825,
+        3650
+      ],
+      "level_worst": [
+        0,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        9,
+        9,
+        9,
+        9
+      ],
+      "tags": [
+        "two_feet",
+        "directional_candidate"
+      ],
+      "instructions": "Start matched on cyan. Move your right hand to pink and hold for 2 seconds; left hand stays on cyan. Use only listed feet/rails for feet, no unlit holds or floor. Establish the start with assistance if needed. Record any changed beta in the note."
+    },
+    {
+      "id": "T026",
+      "starts": [
+        805
+      ],
+      "target": 1003,
+      "feet": [
+        404
+      ],
+      "rails": [],
+      "difficulty_score": 762,
+      "score_model": "base_only_no_feet_direction_or_rail_modifiers",
+      "matching_levels": [
+        6
+      ],
+      "level_match_rule": "score_window_and_target_hold_limit_only; not full geometric eligibility",
+      "from_rating": 8,
+      "to_rating": 7,
+      "weighted_distance_squared": 10,
+      "level_min": [
+        0,
+        0,
+        0,
+        0,
+        105,
+        250,
+        600,
+        1100,
+        1465,
+        1880,
+        2490
+      ],
+      "level_max": [
+        0,
+        205,
+        265,
+        340,
+        485,
+        665,
+        1110,
+        1790,
+        2275,
+        2825,
+        3650
+      ],
+      "level_worst": [
+        0,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        9,
+        9,
+        9,
+        9
+      ],
+      "tags": [
+        "one_foot",
+        "directional_candidate"
+      ],
+      "instructions": "Start matched on cyan. Move your right hand to pink and hold for 2 seconds; left hand stays on cyan. Use only listed feet/rails for feet, no unlit holds or floor. Establish the start with assistance if needed. Record any changed beta in the note."
+    },
+    {
+      "id": "T027",
+      "starts": [
+        805
+      ],
+      "target": 1003,
+      "feet": [],
+      "rails": [
+        "left"
+      ],
+      "difficulty_score": 762,
+      "score_model": "base_only_no_feet_direction_or_rail_modifiers",
+      "matching_levels": [
+        6
+      ],
+      "level_match_rule": "score_window_and_target_hold_limit_only; not full geometric eligibility",
+      "from_rating": 8,
+      "to_rating": 7,
+      "weighted_distance_squared": 10,
+      "level_min": [
+        0,
+        0,
+        0,
+        0,
+        105,
+        250,
+        600,
+        1100,
+        1465,
+        1880,
+        2490
+      ],
+      "level_max": [
+        0,
+        205,
+        265,
+        340,
+        485,
+        665,
+        1110,
+        1790,
+        2275,
+        2825,
+        3650
+      ],
+      "level_worst": [
+        0,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        9,
+        9,
+        9,
+        9
+      ],
+      "tags": [
+        "left_rail",
+        "directional_candidate"
+      ],
+      "instructions": "Start matched on cyan. Move your right hand to pink and hold for 2 seconds; left hand stays on cyan. Use only listed feet/rails for feet, no unlit holds or floor. Establish the start with assistance if needed. Record any changed beta in the note."
+    },
+    {
+      "id": "T028",
+      "starts": [
+        805
+      ],
+      "target": 1003,
+      "feet": [],
+      "rails": [],
+      "difficulty_score": 762,
+      "score_model": "base_only_no_feet_direction_or_rail_modifiers",
+      "matching_levels": [
+        6
+      ],
+      "level_match_rule": "score_window_and_target_hold_limit_only; not full geometric eligibility",
+      "from_rating": 8,
+      "to_rating": 7,
+      "weighted_distance_squared": 10,
+      "level_min": [
+        0,
+        0,
+        0,
+        0,
+        105,
+        250,
+        600,
+        1100,
+        1465,
+        1880,
+        2490
+      ],
+      "level_max": [
+        0,
+        205,
+        265,
+        340,
+        485,
+        665,
+        1110,
+        1790,
+        2275,
+        2825,
+        3650
+      ],
+      "level_worst": [
+        0,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        9,
+        9,
+        9,
+        9
+      ],
+      "tags": [
+        "no_feet",
+        "directional_candidate"
+      ],
+      "instructions": "Start matched on cyan. Move your right hand to pink and hold for 2 seconds; left hand stays on cyan. Use only listed feet/rails for feet, no unlit holds or floor. Establish the start with assistance if needed. Record any changed beta in the note."
+    },
+    {
+      "id": "T029",
+      "starts": [
+        904
+      ],
+      "target": 1105,
+      "feet": [
+        404,
+        408
+      ],
+      "rails": [],
+      "difficulty_score": 526,
+      "score_model": "base_only_no_feet_direction_or_rail_modifiers",
+      "matching_levels": [
+        5
+      ],
+      "level_match_rule": "score_window_and_target_hold_limit_only; not full geometric eligibility",
+      "from_rating": 6,
+      "to_rating": 7,
+      "weighted_distance_squared": 7,
+      "level_min": [
+        0,
+        0,
+        0,
+        0,
+        105,
+        250,
+        600,
+        1100,
+        1465,
+        1880,
+        2490
+      ],
+      "level_max": [
+        0,
+        205,
+        265,
+        340,
+        485,
+        665,
+        1110,
+        1790,
+        2275,
+        2825,
+        3650
+      ],
+      "level_worst": [
+        0,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        9,
+        9,
+        9,
+        9
+      ],
+      "tags": [
+        "two_feet",
+        "directional_candidate"
+      ],
+      "instructions": "Start matched on cyan. Move your right hand to pink and hold for 2 seconds; left hand stays on cyan. Use only listed feet/rails for feet, no unlit holds or floor. Establish the start with assistance if needed. Record any changed beta in the note."
+    },
+    {
+      "id": "T030",
+      "starts": [
+        904
+      ],
+      "target": 1105,
+      "feet": [
+        404
+      ],
+      "rails": [],
+      "difficulty_score": 526,
+      "score_model": "base_only_no_feet_direction_or_rail_modifiers",
+      "matching_levels": [
+        5
+      ],
+      "level_match_rule": "score_window_and_target_hold_limit_only; not full geometric eligibility",
+      "from_rating": 6,
+      "to_rating": 7,
+      "weighted_distance_squared": 7,
+      "level_min": [
+        0,
+        0,
+        0,
+        0,
+        105,
+        250,
+        600,
+        1100,
+        1465,
+        1880,
+        2490
+      ],
+      "level_max": [
+        0,
+        205,
+        265,
+        340,
+        485,
+        665,
+        1110,
+        1790,
+        2275,
+        2825,
+        3650
+      ],
+      "level_worst": [
+        0,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        9,
+        9,
+        9,
+        9
+      ],
+      "tags": [
+        "one_foot",
+        "directional_candidate"
+      ],
+      "instructions": "Start matched on cyan. Move your right hand to pink and hold for 2 seconds; left hand stays on cyan. Use only listed feet/rails for feet, no unlit holds or floor. Establish the start with assistance if needed. Record any changed beta in the note."
+    },
+    {
+      "id": "T031",
+      "starts": [
+        904
+      ],
+      "target": 1105,
+      "feet": [],
+      "rails": [
+        "left"
+      ],
+      "difficulty_score": 526,
+      "score_model": "base_only_no_feet_direction_or_rail_modifiers",
+      "matching_levels": [
+        5
+      ],
+      "level_match_rule": "score_window_and_target_hold_limit_only; not full geometric eligibility",
+      "from_rating": 6,
+      "to_rating": 7,
+      "weighted_distance_squared": 7,
+      "level_min": [
+        0,
+        0,
+        0,
+        0,
+        105,
+        250,
+        600,
+        1100,
+        1465,
+        1880,
+        2490
+      ],
+      "level_max": [
+        0,
+        205,
+        265,
+        340,
+        485,
+        665,
+        1110,
+        1790,
+        2275,
+        2825,
+        3650
+      ],
+      "level_worst": [
+        0,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        9,
+        9,
+        9,
+        9
+      ],
+      "tags": [
+        "left_rail",
+        "directional_candidate"
+      ],
+      "instructions": "Start matched on cyan. Move your right hand to pink and hold for 2 seconds; left hand stays on cyan. Use only listed feet/rails for feet, no unlit holds or floor. Establish the start with assistance if needed. Record any changed beta in the note."
+    },
+    {
+      "id": "T032",
+      "starts": [
+        904
+      ],
+      "target": 1105,
+      "feet": [],
+      "rails": [],
+      "difficulty_score": 526,
+      "score_model": "base_only_no_feet_direction_or_rail_modifiers",
+      "matching_levels": [
+        5
+      ],
+      "level_match_rule": "score_window_and_target_hold_limit_only; not full geometric eligibility",
+      "from_rating": 6,
+      "to_rating": 7,
+      "weighted_distance_squared": 7,
+      "level_min": [
+        0,
+        0,
+        0,
+        0,
+        105,
+        250,
+        600,
+        1100,
+        1465,
+        1880,
+        2490
+      ],
+      "level_max": [
+        0,
+        205,
+        265,
+        340,
+        485,
+        665,
+        1110,
+        1790,
+        2275,
+        2825,
+        3650
+      ],
+      "level_worst": [
+        0,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        9,
+        9,
+        9,
+        9
+      ],
+      "tags": [
+        "no_feet",
+        "directional_candidate"
+      ],
+      "instructions": "Start matched on cyan. Move your right hand to pink and hold for 2 seconds; left hand stays on cyan. Use only listed feet/rails for feet, no unlit holds or floor. Establish the start with assistance if needed. Record any changed beta in the note."
+    },
+    {
+      "id": "T033",
+      "starts": [
+        1004
+      ],
+      "target": 1403,
+      "feet": [
+        404,
+        408
+      ],
+      "rails": [],
+      "difficulty_score": 1463,
+      "score_model": "base_only_no_feet_direction_or_rail_modifiers",
+      "matching_levels": [
+        7
+      ],
+      "level_match_rule": "score_window_and_target_hold_limit_only; not full geometric eligibility",
+      "from_rating": 5,
+      "to_rating": 8,
+      "weighted_distance_squared": 25,
+      "level_min": [
+        0,
+        0,
+        0,
+        0,
+        105,
+        250,
+        600,
+        1100,
+        1465,
+        1880,
+        2490
+      ],
+      "level_max": [
+        0,
+        205,
+        265,
+        340,
+        485,
+        665,
+        1110,
+        1790,
+        2275,
+        2825,
+        3650
+      ],
+      "level_worst": [
+        0,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        9,
+        9,
+        9,
+        9
+      ],
+      "tags": [
+        "two_feet",
+        "directional_candidate"
+      ],
+      "instructions": "Start matched on cyan. Move your right hand to pink and hold for 2 seconds; left hand stays on cyan. Use only listed feet/rails for feet, no unlit holds or floor. Establish the start with assistance if needed. Record any changed beta in the note."
+    },
+    {
+      "id": "T034",
+      "starts": [
+        1004
+      ],
+      "target": 1403,
+      "feet": [
+        404
+      ],
+      "rails": [],
+      "difficulty_score": 1463,
+      "score_model": "base_only_no_feet_direction_or_rail_modifiers",
+      "matching_levels": [
+        7
+      ],
+      "level_match_rule": "score_window_and_target_hold_limit_only; not full geometric eligibility",
+      "from_rating": 5,
+      "to_rating": 8,
+      "weighted_distance_squared": 25,
+      "level_min": [
+        0,
+        0,
+        0,
+        0,
+        105,
+        250,
+        600,
+        1100,
+        1465,
+        1880,
+        2490
+      ],
+      "level_max": [
+        0,
+        205,
+        265,
+        340,
+        485,
+        665,
+        1110,
+        1790,
+        2275,
+        2825,
+        3650
+      ],
+      "level_worst": [
+        0,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        9,
+        9,
+        9,
+        9
+      ],
+      "tags": [
+        "one_foot",
+        "directional_candidate"
+      ],
+      "instructions": "Start matched on cyan. Move your right hand to pink and hold for 2 seconds; left hand stays on cyan. Use only listed feet/rails for feet, no unlit holds or floor. Establish the start with assistance if needed. Record any changed beta in the note."
+    },
+    {
+      "id": "T035",
+      "starts": [
+        1004
+      ],
+      "target": 1403,
+      "feet": [],
+      "rails": [
+        "left"
+      ],
+      "difficulty_score": 1463,
+      "score_model": "base_only_no_feet_direction_or_rail_modifiers",
+      "matching_levels": [
+        7
+      ],
+      "level_match_rule": "score_window_and_target_hold_limit_only; not full geometric eligibility",
+      "from_rating": 5,
+      "to_rating": 8,
+      "weighted_distance_squared": 25,
+      "level_min": [
+        0,
+        0,
+        0,
+        0,
+        105,
+        250,
+        600,
+        1100,
+        1465,
+        1880,
+        2490
+      ],
+      "level_max": [
+        0,
+        205,
+        265,
+        340,
+        485,
+        665,
+        1110,
+        1790,
+        2275,
+        2825,
+        3650
+      ],
+      "level_worst": [
+        0,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        9,
+        9,
+        9,
+        9
+      ],
+      "tags": [
+        "left_rail",
+        "directional_candidate"
+      ],
+      "instructions": "Start matched on cyan. Move your right hand to pink and hold for 2 seconds; left hand stays on cyan. Use only listed feet/rails for feet, no unlit holds or floor. Establish the start with assistance if needed. Record any changed beta in the note."
+    },
+    {
+      "id": "T036",
+      "starts": [
+        1004
+      ],
+      "target": 1403,
+      "feet": [],
+      "rails": [],
+      "difficulty_score": 1463,
+      "score_model": "base_only_no_feet_direction_or_rail_modifiers",
+      "matching_levels": [
+        7
+      ],
+      "level_match_rule": "score_window_and_target_hold_limit_only; not full geometric eligibility",
+      "from_rating": 5,
+      "to_rating": 8,
+      "weighted_distance_squared": 25,
+      "level_min": [
+        0,
+        0,
+        0,
+        0,
+        105,
+        250,
+        600,
+        1100,
+        1465,
+        1880,
+        2490
+      ],
+      "level_max": [
+        0,
+        205,
+        265,
+        340,
+        485,
+        665,
+        1110,
+        1790,
+        2275,
+        2825,
+        3650
+      ],
+      "level_worst": [
+        0,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        9,
+        9,
+        9,
+        9
+      ],
+      "tags": [
+        "no_feet",
+        "directional_candidate"
+      ],
+      "instructions": "Start matched on cyan. Move your right hand to pink and hold for 2 seconds; left hand stays on cyan. Use only listed feet/rails for feet, no unlit holds or floor. Establish the start with assistance if needed. Record any changed beta in the note."
+    },
+    {
+      "id": "T037",
+      "starts": [
+        1006
+      ],
+      "target": 1408,
+      "feet": [
+        404,
+        408
+      ],
+      "rails": [],
+      "difficulty_score": 1329,
+      "score_model": "base_only_no_feet_direction_or_rail_modifiers",
+      "matching_levels": [
+        7
+      ],
+      "level_match_rule": "score_window_and_target_hold_limit_only; not full geometric eligibility",
+      "from_rating": 2,
+      "to_rating": 8,
+      "weighted_distance_squared": 28,
+      "level_min": [
+        0,
+        0,
+        0,
+        0,
+        105,
+        250,
+        600,
+        1100,
+        1465,
+        1880,
+        2490
+      ],
+      "level_max": [
+        0,
+        205,
+        265,
+        340,
+        485,
+        665,
+        1110,
+        1790,
+        2275,
+        2825,
+        3650
+      ],
+      "level_worst": [
+        0,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        9,
+        9,
+        9,
+        9
+      ],
+      "tags": [
+        "two_feet",
+        "directional_candidate"
+      ],
+      "instructions": "Start matched on cyan. Move your right hand to pink and hold for 2 seconds; left hand stays on cyan. Use only listed feet/rails for feet, no unlit holds or floor. Establish the start with assistance if needed. Record any changed beta in the note."
+    },
+    {
+      "id": "T038",
+      "starts": [
+        1006
+      ],
+      "target": 1408,
+      "feet": [
+        404
+      ],
+      "rails": [],
+      "difficulty_score": 1329,
+      "score_model": "base_only_no_feet_direction_or_rail_modifiers",
+      "matching_levels": [
+        7
+      ],
+      "level_match_rule": "score_window_and_target_hold_limit_only; not full geometric eligibility",
+      "from_rating": 2,
+      "to_rating": 8,
+      "weighted_distance_squared": 28,
+      "level_min": [
+        0,
+        0,
+        0,
+        0,
+        105,
+        250,
+        600,
+        1100,
+        1465,
+        1880,
+        2490
+      ],
+      "level_max": [
+        0,
+        205,
+        265,
+        340,
+        485,
+        665,
+        1110,
+        1790,
+        2275,
+        2825,
+        3650
+      ],
+      "level_worst": [
+        0,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        9,
+        9,
+        9,
+        9
+      ],
+      "tags": [
+        "one_foot",
+        "directional_candidate"
+      ],
+      "instructions": "Start matched on cyan. Move your right hand to pink and hold for 2 seconds; left hand stays on cyan. Use only listed feet/rails for feet, no unlit holds or floor. Establish the start with assistance if needed. Record any changed beta in the note."
+    },
+    {
+      "id": "T039",
+      "starts": [
+        1006
+      ],
+      "target": 1408,
+      "feet": [],
+      "rails": [
+        "left"
+      ],
+      "difficulty_score": 1329,
+      "score_model": "base_only_no_feet_direction_or_rail_modifiers",
+      "matching_levels": [
+        7
+      ],
+      "level_match_rule": "score_window_and_target_hold_limit_only; not full geometric eligibility",
+      "from_rating": 2,
+      "to_rating": 8,
+      "weighted_distance_squared": 28,
+      "level_min": [
+        0,
+        0,
+        0,
+        0,
+        105,
+        250,
+        600,
+        1100,
+        1465,
+        1880,
+        2490
+      ],
+      "level_max": [
+        0,
+        205,
+        265,
+        340,
+        485,
+        665,
+        1110,
+        1790,
+        2275,
+        2825,
+        3650
+      ],
+      "level_worst": [
+        0,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        9,
+        9,
+        9,
+        9
+      ],
+      "tags": [
+        "left_rail",
+        "directional_candidate"
+      ],
+      "instructions": "Start matched on cyan. Move your right hand to pink and hold for 2 seconds; left hand stays on cyan. Use only listed feet/rails for feet, no unlit holds or floor. Establish the start with assistance if needed. Record any changed beta in the note."
+    },
+    {
+      "id": "T040",
+      "starts": [
+        1006
+      ],
+      "target": 1408,
+      "feet": [],
+      "rails": [],
+      "difficulty_score": 1329,
+      "score_model": "base_only_no_feet_direction_or_rail_modifiers",
+      "matching_levels": [
+        7
+      ],
+      "level_match_rule": "score_window_and_target_hold_limit_only; not full geometric eligibility",
+      "from_rating": 2,
+      "to_rating": 8,
+      "weighted_distance_squared": 28,
+      "level_min": [
+        0,
+        0,
+        0,
+        0,
+        105,
+        250,
+        600,
+        1100,
+        1465,
+        1880,
+        2490
+      ],
+      "level_max": [
+        0,
+        205,
+        265,
+        340,
+        485,
+        665,
+        1110,
+        1790,
+        2275,
+        2825,
+        3650
+      ],
+      "level_worst": [
+        0,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        9,
+        9,
+        9,
+        9
+      ],
+      "tags": [
+        "no_feet",
+        "directional_candidate"
+      ],
+      "instructions": "Start matched on cyan. Move your right hand to pink and hold for 2 seconds; left hand stays on cyan. Use only listed feet/rails for feet, no unlit holds or floor. Establish the start with assistance if needed. Record any changed beta in the note."
+    }
+  ]
+}

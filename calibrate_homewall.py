@@ -5,9 +5,8 @@ Quick start:
   python3 calibrate_homewall.py
 
 Defaults: ./test_cases.json (created if absent), /dev/ttyACM0,
-./all_homewall_serial_output.txt, ./homewall_ratings.csv, climber Shannon,
-shuffled order with seed 20261009. Run from the HTTP monitor's log directory
-or supply --monitor-log. Existing cases are never overwritten.
+./homewall_ratings.csv, climber Shannon, shuffled order with seed 20261009.
+Existing cases are never overwritten. No monitor log is read or required.
 
 Other commands:
   python3 calibrate_homewall.py --write-example test_cases.json
@@ -17,10 +16,9 @@ Other commands:
 Keep the HTTP serial monitor running; it owns serial settings and reads.
 Uses scratch problem slot 98 in RAM. Sends via system printf with a write-only
 serial descriptor; never reads, flushes, or configures the serial port.
-Verifies new entries in the monitor log (20-value echo and unflipped display).
-Set --monitor-log to the HTTP monitor's all_homewall_serial_output.txt path.
-Avoid other wall commands during a session. Log rotation/truncation aborts the
-current case; restart after the monitor log is stable.
+No acknowledgment checks. Waits 2.5 seconds after commands for firmware parsing.
+Ensure wall flip is OFF before starting and visually check displayed moves;
+flip state cannot be detected in write-only mode. Avoid other wall commands.
 No cloud commands are sent. Avoid changing the wall from another controller.
 
 JSON schema: {"schema_version":1,"cases":[{"id":"T001", "starts":[405],
@@ -159,69 +157,37 @@ def example_cases():
                 'instructions': 'Start matched on cyan. Move your right hand to pink and hold for 2 seconds; left hand stays on cyan. Use only listed feet/rails for feet, no unlit holds or floor. Establish the start with assistance if needed. Record any changed beta in the note.'})
     return {'schema_version':1,'description':'40 fixed pilot cases. Review physical usability first; labels are not predicted grades. Edit hand/beta to prescribe gastons. Rail conditions may be impractical on some moves.', 'cases':cases}
 
-def parse_confirmation(text):
-    echoes=[]
-    for line in text.splitlines():
-        # Existing monitor prefixes each Arduino line with local date/time.
-        line=re.sub(r'^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} - ', '', line)
-        if re.fullmatch(r'\s*-?\d+(?:\s*,\s*-?\d+){19}\s*',line):
-            echoes.append([int(x.strip()) for x in line.split(',')])
-    sides=re.findall(r'Side:\s*([01])\b',text)
-    return (echoes[-1] if echoes else None, int(sides[-1]) if sides else None)
-
 class Wall:
-    def __init__(self,port,monitor_log,timeout):
-        self.port=port;self.log=Path(monitor_log);self.timeout=timeout
-        if timeout<3:raise ValueError('--ack-timeout must be at least 3 seconds')
-        if not self.log.is_file():
-            raise RuntimeError('Monitor log not found. Keep HTTP monitor running and provide --monitor-log with its absolute log path.')
-        self.exchange(':P98\n')
+    def __init__(self, port, command_delay):
+        self.port = port
+        self.command_delay = command_delay
+        if command_delay < 0:
+            raise ValueError('--command-delay must be nonnegative')
+        self.send(':P98\n')
 
-    def send(self,command):
-        # No shell interpolation: command bytes are a printf argument, and the
-        # port is opened only for writing. The running monitor sets baud rate.
-        fd=os.open(self.port,os.O_WRONLY | os.O_NOCTTY | os.O_NONBLOCK)
+    def send(self, command):
+        # Write only. The HTTP monitor owns serial configuration and reads.
+        fd = os.open(self.port, os.O_WRONLY | os.O_NOCTTY | os.O_NONBLOCK)
         try:
-            subprocess.run(['printf','%s',command],stdout=fd,check=True,timeout=3)
-        finally:os.close(fd)
+            subprocess.run(['printf', '%s', command], stdout=fd,
+                           check=True, timeout=3)
+        finally:
+            os.close(fd)
+        # Firmware uses readString(), so separate commands in time.
+        time.sleep(self.command_delay)
 
-    def exchange(self,command):
-        # Read only bytes appended AFTER this command; stale acknowledgments
-        # from previous sessions must never count as confirmation.
-        with self.log.open('rb') as f:
-            f.seek(0,2);identity=os.fstat(f.fileno())
-            self.send(command)
-            deadline=time.monotonic()+self.timeout;last=time.monotonic();raw=bytearray()
-            while time.monotonic()<deadline:
-                st=self.log.stat()
-                if (st.st_dev,st.st_ino)!=(identity.st_dev,identity.st_ino) or st.st_size<f.tell():
-                    raise RuntimeError('Monitor log rotated/truncated. Restart calibration; current case has not been rated.')
-                chunk=f.read()
-                if chunk:raw.extend(chunk);last=time.monotonic()
-                text=raw.decode(errors='replace');echo,side=parse_confirmation(text)
-                if echo is not None and side is not None and time.monotonic()-last>=1.5:
-                    return text
-                time.sleep(.1)
-        raise RuntimeError('No fresh complete acknowledgment in monitor log. Check --monitor-log, monitor flushing, serial port and firmware. Current case was not rated.')
-
-    def display(self,values,command):
-        reply=self.exchange(command);echo,side=parse_confirmation(reply)
-        if echo!=values:
-            raise RuntimeError('Monitor echoed a different problem. Another controller may have changed the wall; no rating recorded.')
-        if side==1:
-            reply=self.exchange(':F\n');echo,side=parse_confirmation(reply)
-        if echo!=values or side!=0:
-            raise RuntimeError('Could not confirm requested holds with Side: 0; no rating recorded.')
+    def display(self, values, command):
+        self.send(command)
 
     def close(self):
-        pass  # Monitor owns the persistent serial connection.
+        pass
 
 def main():
     ap=argparse.ArgumentParser(description=__doc__,formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument('cases',nargs='?',default='test_cases.json');ap.add_argument('--write-example',metavar='FILE')
     ap.add_argument('--port',default='/dev/ttyACM0')
-    ap.add_argument('--monitor-log',default='all_homewall_serial_output.txt')
-    ap.add_argument('--ack-timeout',type=float,default=12)
+    ap.add_argument('--command-delay',type=float,default=2.5,
+                    help='Seconds to wait after each write (default: 2.5)')
     ap.add_argument('--log',default='homewall_ratings.csv');ap.add_argument('--climber',default='Shannon')
     ap.add_argument('--shuffle',dest='shuffle',action='store_true',default=True)
     ap.add_argument('--no-shuffle',dest='shuffle',action='store_false',help='Use input-file order')
@@ -254,9 +220,9 @@ def main():
         if f.tell()==0:writer.writeheader();f.flush();os.fsync(f.fileno())
         if not queue:print('All cases already rated for this climber. Use --repeat-rated for another pass.');return
         print(f'{len(queue)} cases remaining. 1-10=difficulty, 11=impossible; r=repeat, s=skip, q=quit.')
-        if not args.dry_run:print('Uses slot 98. Keep HTTP serial monitor running; avoid other wall commands. Last case stays displayed on exit.')
+        if not args.dry_run:print('Uses slot 98. Keep HTTP serial monitor running; avoid other wall commands. No acknowledgment checks. Ensure flip is OFF; visually check each move. Last case stays displayed on exit.')
         try:
-            if not args.dry_run:wall=Wall(args.port,args.monitor_log,args.ack_timeout)
+            if not args.dry_run:wall=Wall(args.port,args.command_delay)
             for progress,(number,case) in enumerate(queue,1):
                 values,command=encode(case)
                 print(f'\nTest {number}: {case["id"]} ({progress}/{len(queue)})')

@@ -4,17 +4,17 @@
 Quick start:
   python3 calibrate_homewall.py
 
-Defaults: ./test_cases.json (created if absent), /dev/ttyACM0,
+Defaults: ./test_cases.json (created if absent), /dev/ttyACM1,
 ./homewall_ratings.csv, climber Shannon, shuffled order with seed 20261009.
 Existing cases are never overwritten. No monitor log is read or required.
 
 Other commands:
   python3 calibrate_homewall.py --write-example test_cases.json
   python3 calibrate_homewall.py test_cases.json --dry-run --log practice.csv
-  python3 calibrate_homewall.py test_cases.json --port /dev/ttyACM0 --shuffle
+  python3 calibrate_homewall.py test_cases.json --port /dev/ttyACM1 --shuffle
 
 Keep the HTTP serial monitor running; it owns serial settings and reads.
-Uses scratch problem slot 98 in RAM. Sends via system printf with a write-only
+Uses scratch problem slot 98 in RAM. Sends via shell echo/redirection with a write-only
 serial descriptor; never reads, flushes, or configures the serial port.
 No acknowledgment checks. Waits 2.5 seconds after commands for firmware parsing.
 Ensure wall flip is OFF before starting and visually check displayed moves;
@@ -51,6 +51,7 @@ import random
 import re
 import sys
 import subprocess
+import shlex
 import time
 import uuid
 from datetime import datetime, timezone
@@ -166,13 +167,14 @@ class Wall:
         self.send(':P98\n')
 
     def send(self, command):
-        # Write only. The HTTP monitor owns serial configuration and reads.
-        fd = os.open(self.port, os.O_WRONLY | os.O_NOCTTY | os.O_NONBLOCK)
-        try:
-            subprocess.run(['printf', '%s', command], stdout=fd,
-                           check=True, timeout=3)
-        finally:
-            os.close(fd)
+        # Use the same shell echo/redirection that works at the Pi terminal.
+        # Quote both values; no nonblocking descriptor or serial configuration.
+        payload = command.rstrip('\n')
+        if '\n' in payload or '\r' in payload:
+            raise ValueError('Serial command must be a single line')
+        shell_command = 'echo ' + shlex.quote(payload) + ' > ' + shlex.quote(self.port)
+        print('TX: ' + shell_command, flush=True)
+        subprocess.run(['/bin/sh', '-c', shell_command], check=True, timeout=10)
         # Firmware uses readString(), so separate commands in time.
         time.sleep(self.command_delay)
 
@@ -182,10 +184,14 @@ class Wall:
     def close(self):
         pass
 
+SCRIPT_VERSION = "2026.10.09.1"
+
 def main():
+    print(f"HomeWall Calibration v{SCRIPT_VERSION}", flush=True)
+    print(f"Script: {Path(__file__).resolve()}", flush=True)
     ap=argparse.ArgumentParser(description=__doc__,formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument('cases',nargs='?',default='test_cases.json');ap.add_argument('--write-example',metavar='FILE')
-    ap.add_argument('--port',default='/dev/ttyACM0')
+    ap.add_argument('--port',default='/dev/ttyACM1')
     ap.add_argument('--command-delay',type=float,default=2.5,
                     help='Seconds to wait after each write (default: 2.5)')
     ap.add_argument('--log',default='homewall_ratings.csv');ap.add_argument('--climber',default='Shannon')

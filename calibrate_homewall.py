@@ -138,25 +138,33 @@ def load_cases(path):
     return cases,digest(data)
 
 def example_cases():
-    # Physical coordinates from the uploaded October 9 homewall_var.h.
-    # Fixed broad-range prompts, NOT validated grade labels or guaranteed gastons.
-    pairs=[(405,504),(405,606),(504,703),(604,805),(703,1003),
-           (704,903),(805,1003),(904,1105),(1004,1403),(1006,1408)]
+    # Left/right starting hands are distinct; pink targets stay fixed.
+    # Physical coordinates from the October 9 hold map. Same hand pair is
+    # repeated across support conditions for controlled comparisons.
+    setups=[(404,405,504,104,105), (404,405,606,104,105),
+            (503,504,703,204,205), (603,604,805,304,305),
+            (703,704,1003,403,404), (703,704,903,403,404),
+            (804,805,1003,504,505), (903,904,1105,603,604),
+            (1003,1004,1403,703,704), (1005,1006,1408,705,706)]
     cases=[]
-    for j,(start,target) in enumerate(pairs):
-        r,c=divmod(start,100)
-        # Row 2 columns 4/8 and row 4 columns 4/8 are real holds on this board.
-        frow=2 if r<=7 else 4
-        variants=[('two_feet',[frow*100+4,frow*100+8],[]),
-                  ('one_foot',[frow*100+4],[]),
-                  ('left_rail',[],['left']),('no_feet',[],[])]
+    for left,right,target,foot_left,foot_right in setups:
+        variants=[('two_feet',[foot_left,foot_right],[]),
+                  ('one_foot',[foot_left],[]),
+                  ('two_feet_left_rail',[foot_left,foot_right],['left']),
+                  ('two_feet_right_rail',[foot_left,foot_right],['right'])]
         for label,feet,rails in variants:
-            cases.append({'id':f'T{len(cases)+1:03d}', 'starts':[start],
-                'target':target,'feet':feet,'rails':rails,
-                **prediction(start,target),
-                'tags':[label,'directional_candidate' if j in (2,4,5,6,7,8,9) else 'baseline'],
-                'instructions': 'Start matched on cyan. Move your right hand to pink and hold for 2 seconds; left hand stays on cyan. Use only listed feet/rails for feet, no unlit holds or floor. Establish the start with assistance if needed. Record any changed beta in the note.'})
-    return {'schema_version':1,'description':'40 fixed pilot cases. Review physical usability first; labels are not predicted grades. Edit hand/beta to prescribe gastons. Rail conditions may be impractical on some moves.', 'cases':cases}
+            pred=prediction(left,target)
+            pred['score_model']='base_only_stationary_left_hand_to_target_no_support_modifiers'
+            pred['score_reference_hold']=left
+            pred['moving_hand_start']=right
+            cases.append({'id':f'T{len(cases)+1:03d}',
+                'starts':[left,right], 'start_hands':{'left':left,'right':right},
+                'moving_hand':'right','target':target,'feet':feet,'rails':rails,
+                **pred, 'tags':[label,'two_start_hands'],
+                'instructions': f'Start with left hand on {left} and right hand on {right} (both cyan). Move right hand to pink and hold for 2 seconds; left hand stays on {left}. Use only listed feet/rails for feet; no unlit holds or floor. Establish the start with assistance if needed. Record any changed beta in the note.'})
+    return {'schema_version':1,'dataset_version':'2026.10.09.2',
+        'description':'40 fixed cases: two distinct start hands, one pink target, one or two physical feet (30 cases with two feet). Targets unchanged. Base score references stationary left hand; support and moving-hand effects are not modeled. Review usability before rating.',
+        'cases':cases}
 
 class Wall:
     def __init__(self, port, command_delay):
@@ -184,7 +192,26 @@ class Wall:
     def close(self):
         pass
 
-SCRIPT_VERSION = "2026.10.09.1"
+def show_rating_history(rows, climber, dry_run, current_cases, limit=10):
+    rated = [r for r in rows if r['status'] == 'rated'
+             and r['climber'] == climber and r['dry_run'] == str(dry_run)]
+    print('\nYOUR RATINGS (newest at bottom)')
+    if not rated:
+        print('  No ratings yet.')
+        return
+    shown = rated[-limit:] if limit else rated
+    print(f'  Showing {len(shown)} of {len(rated)} saved ratings')
+    print('  Test    Case       Rating   Notes')
+    for r in shown:
+        old = (r['case_id'], r['case_sha256']) not in current_cases
+        label = r['case_id'] + ('*' if old else '')
+        note = ' '.join(r.get('notes', '').split())
+        if len(note) > 55: note = note[:52] + '...'
+        print(f"  {r['case_number']:<7} {label:<10} {r['rating']:<8} {note}")
+    if any((r['case_id'],r['case_sha256']) not in current_cases for r in shown):
+        print('  * Rating belongs to an earlier/different case definition.')
+
+SCRIPT_VERSION = "2026.10.09.3"
 
 def main():
     print(f"HomeWall Calibration v{SCRIPT_VERSION}", flush=True)
@@ -214,6 +241,7 @@ def main():
     if log.resolve()==Path(args.cases).resolve():raise ValueError('Log cannot overwrite input')
     log.parent.mkdir(parents=True,exist_ok=True)
     session=str(uuid.uuid4());wall=None
+    current_cases={(c['id'],digest(c)) for c in cases}
     import fcntl
     with log.open('a+',newline='',encoding='utf-8') as f:
         fcntl.flock(f,fcntl.LOCK_EX|fcntl.LOCK_NB)
@@ -224,7 +252,10 @@ def main():
         if args.shuffle:random.Random(args.seed).shuffle(queue)
         f.seek(0,2);writer=csv.DictWriter(f,fieldnames=FIELDS)
         if f.tell()==0:writer.writeheader();f.flush();os.fsync(f.fileno())
-        if not queue:print('All cases already rated for this climber. Use --repeat-rated for another pass.');return
+        if not queue:
+            show_rating_history(rows,args.climber,args.dry_run,current_cases,limit=0)
+            print('All cases already rated for this climber. Use --repeat-rated for another pass.')
+            return
         print(f'{len(queue)} cases remaining. 1-10=difficulty, 11=impossible; r=repeat, s=skip, q=quit.')
         if not args.dry_run:print('Uses slot 98. Keep HTTP serial monitor running; avoid other wall commands. No acknowledgment checks. Ensure flip is OFF; visually check each move. Last case stays displayed on exit.')
         try:
@@ -239,16 +270,22 @@ def main():
                 else:print('DRY RUN:',command.strip())
                 started=time.monotonic()
                 while True:
-                    answer=input('Rating 1-11 [optional note], r/s/q: ').strip()
+                    show_rating_history(rows,args.climber,args.dry_run,current_cases)
+                    print(f'\nCurrent test {number}: {case["id"]}')
+                    answer=input('Rating 1-11 [optional note], r=repeat, h=all ratings, s=skip, q=quit: ').strip()
                     parts=answer.split(maxsplit=1);token=parts[0].lower() if parts else ''
                     if token=='q':return
+                    if token=='h':
+                        show_rating_history(rows,args.climber,args.dry_run,current_cases,limit=0)
+                        input('Press Enter to return to the current test: ')
+                        continue
                     if token=='r':
                         if wall:wall.display(values,command)
                         else:print(command.strip())
                         continue
                     rating=int(token) if token.isdigit() else None
                     if token!='s' and (rating is None or not 1<=rating<=11):
-                        print('Enter 1-11, r, s, or q.');continue
+                        print('Enter 1-11, r, h, s, or q.');continue
                     row=dict(timestamp_utc=datetime.now(timezone.utc).isoformat(),session_id=session,
                         climber=args.climber,case_number=number,case_id=case['id'],case_sha256=digest(case),
                         dataset_sha256=dataset,status='skipped' if token=='s' else 'rated',
@@ -258,7 +295,8 @@ def main():
                         difficulty_score=case.get('difficulty_score',''),
                         matching_levels=canonical(case.get('matching_levels',[])),
                         score_model=case.get('score_model','unspecified'),case_json=canonical(case))
-                    writer.writerow(row);f.flush();os.fsync(f.fileno());print('Saved.');break
+                    writer.writerow(row);f.flush();os.fsync(f.fileno());rows.append(row);print('Saved.');break
+            show_rating_history(rows,args.climber,args.dry_run,current_cases,limit=0)
             print('Session complete:',log)
         finally:
             if wall:wall.close()

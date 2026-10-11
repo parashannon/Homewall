@@ -168,7 +168,7 @@ def show_rating_history(rows, climber, dry_run, current_cases, limit=0):
         old=(r['case_id'],r['case_sha256']) not in current_cases
         rating=r['rating'] if r['status']=='rated' else 'skip'
         note=' '.join(r.get('notes','').split())
-        label=f"{r['case_number']:>3} {r['case_id']}{'*' if old else ''}: {rating}"
+        label=f"Test {r['case_number']}{'*' if old else ''}: {rating}"
         if note:label+=' | '+note
         if len(label)>cell:label=label[:cell-3]+'...'
         items.append(label)
@@ -176,7 +176,7 @@ def show_rating_history(rows, climber, dry_run, current_cases, limit=0):
         print('  '.join(x.ljust(cell) for x in items[i:i+columns]).rstrip())
     print(f'  {len(history)} results. * = earlier/different case definition. Full notes are in the CSV.')
 
-SCRIPT_VERSION = "2026.10.11.1"
+SCRIPT_VERSION = "2026.10.11.2"
 
 def main():
     print(f"HomeWall Calibration v{SCRIPT_VERSION}", flush=True)
@@ -213,8 +213,12 @@ def main():
         f.seek(0);reader=csv.DictReader(f);rows=list(reader)
         if reader.fieldnames and reader.fieldnames!=FIELDS:raise ValueError('Existing log has a different schema; choose another --log')
         completed={(r['case_id'],r['case_sha256']) for r in rows if r['status']=='rated' and r['climber']==args.climber and r['dry_run']==str(args.dry_run)}
-        queue=[(i+1,c) for i,c in enumerate(cases) if args.repeat_rated or (c['id'],digest(c)) not in completed]
-        if args.shuffle:random.Random(args.seed).shuffle(queue)
+        # Shuffle the complete set BEFORE numbering/filtering. Presentation
+        # numbers stay sequential on first use and stable across resumes.
+        ordered_cases=list(cases)
+        if args.shuffle:random.Random(args.seed).shuffle(ordered_cases)
+        queue=[(i+1,c) for i,c in enumerate(ordered_cases)
+               if args.repeat_rated or (c['id'],digest(c)) not in completed]
         f.seek(0,2);writer=csv.DictWriter(f,fieldnames=FIELDS)
         if f.tell()==0:writer.writeheader();f.flush();os.fsync(f.fileno())
         if not queue:
@@ -227,7 +231,7 @@ def main():
             if not args.dry_run:wall=Wall(args.port,args.command_delay)
             for progress,(number,case) in enumerate(queue,1):
                 values,command=encode(case)
-                print(f'\nTest {number}: {case["id"]} ({progress}/{len(queue)})')
+                print(f'\nTest {number} ({progress}/{len(queue)} remaining this session)')
                 print('Cyan starts:',case['starts'],' Pink target:',case['target'])
                 if case.get('mode')=='climb_prefix':
                     print('All original holds through pink are available; rate ONLY the last move.')
@@ -239,7 +243,7 @@ def main():
                 started=time.monotonic()
                 while True:
                     show_rating_history(rows,args.climber,args.dry_run,current_cases)
-                    print(f'\nCurrent test {number}: {case["id"]}')
+                    print(f'\nCurrent test {number}')
                     answer=input('Rating 1-11 [optional note], r=repeat, h=all ratings, s=skip, q=quit: ').strip()
                     parts=answer.split(maxsplit=1);token=parts[0].lower() if parts else ''
                     if token=='q':return

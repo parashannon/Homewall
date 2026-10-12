@@ -5,7 +5,8 @@ Default input: test_cases_v2026_10_11_1.json (created if absent).
 Default results: homewall_ratings.csv; climber Shannon; shuffled order.
 Shows the original climb from the bottom to pink. Rate ONLY the final move.
 1-10=difficulty, 11=impossible; r=redisplay, s=skip, h=history, q=quit.
-All results appear above the prompt; full notes and hidden scores are in CSV.
+Color dashboard prelists tests and audits final-move modifiers; arrow keys scroll details.
+Use --plain for scrolling output. Full notes and hidden scores remain in CSV.
 Historical logged scores and source levels are NOT current-code predictions.
 Uses shell echo to /dev/ttyACM1, slot 98, no acknowledgments or serial reads.
 Leave HTTP monitor running, flip OFF, avoid other wall commands.
@@ -176,7 +177,124 @@ def show_rating_history(rows, climber, dry_run, current_cases, limit=0):
         print('  '.join(x.ljust(cell) for x in items[i:i+columns]).rstrip())
     print(f'  {len(history)} results. * = earlier/different case definition. Full notes are in the CSV.')
 
-SCRIPT_VERSION = "2026.10.11.2"
+
+# Snapshot of difficult-use blocks in the accompanying Arduino header.
+HARD_CODES = {204:7,208:7,406:37,1101:8,1111:8,1202:6,1210:6}
+
+def modifier_lines(case):
+    """Audit the candidate before insertion, using the original prefix order.
+    These are reconstructed firmware heuristics, not observed hand/foot placements.
+    No score or predicted level is exposed.
+    """
+    if case.get('mode') != 'climb_prefix':
+        return ['Modifier audit requires a climb_prefix case; unavailable for this legacy case.']
+    entries=case['problem_entries']
+    def decode(v):
+        raw=abs(v)%10000; r,c=divmod(raw,100); hard=c>20
+        if hard:c-=20
+        h=r*100+c
+        code=HARD_CODES.get(h,BASIC_CODES.get(h,0)) if hard else BASIC_CODES.get(h,0)
+        return h,r,c,code,hard
+    prior=[decode(v) for v in entries[:-1]]; target=decode(entries[-1]); old=prior[-1]
+    def area(ref,rlo,rhi,clo,chi):
+        found=[]
+        for h,r,c,code,hard in prior:
+            if (r,c)==(16,6):r=-3
+            if r==1 and c in (1,11):r=-2
+            if ref[1]+rlo<=r<=ref[1]+rhi and ref[2]+clo<=c<=ref[2]+chi:found.append(h)
+        return found
+    def ids(xs):return ','.join(map(str,xs)) or 'none'
+    def orient(x):return x[3]//10%10
+    def side(o):return -1 if o in (1,2) else 1 if o in (4,5) else 0
+    def strength(o):return 1 if o in (1,4) else 2 if o in (2,5) else 0
+    names=['normal','45-left','90-left','undercling','45-right','90-right']
+    a,b=orient(old),orient(target);sa,sb=side(a),side(b)
+    dr,dc=target[1]-old[1],target[2]-old[2]
+    same=min(strength(a),strength(b)) if sa and sa==sb else 0
+    into=strength(b) if sb*dc<0 else 0
+    out=strength(a) if sa*dc>0 else 0
+    opposing=area(target,-6,-2,-4,-1) if sb<0 else area(target,-6,-2,1,4) if sb>0 else []
+    missing=strength(b) if sb and not opposing else 0
+    lower=area(target,-8,-2,-4,4);near=area(target,-7,0,-4,4)
+    match=bool(BASIC_CODES.get(old[0],0)//100 or HARD_CODES.get(old[0],0)//100)
+    need=3 if match else 4; feet=bool(lower) and len(near)>=need
+    previous_dc=old[2]-prior[-2][2] if len(prior)>1 and entries[-2]>=0 else 0
+    cross=previous_dc*dc>0
+    under_a=area(target,-6,-3,-2,2);under_b=area(old,-5,-2,-3,3)
+    rails=[{1601:'heel',1611:'heel',1602:'left',1610:'right',1606:'kickboard'}.get(x[0],str(x[0])) for x in prior if x[1]==16]
+    def penalty(n):return 'OFF' if not n else 'ON x1.25 +50 (45deg)' if n==1 else 'ON x1.5 +100 (90deg)'
+    return [
+        f'Reference {old[0]} ({names[a]}) -> pink {target[0]} ({names[b]}); row {dr:+}, col {dc:+}',
+        'H hard use: '+('ON' if target[4] else 'OFF')+'; previous hard use: '+('ON' if old[4] else 'OFF'),
+        f'Feet: {"PASS" if feet else "FAIL => x2"}; lower window [{ids(lower)}]; nearby [{ids(near)}] need {need}',
+        f'Match-friendly previous hold: {"YES" if match else "NO"}; previous-foot window [{ids(area(old,-7,-2,-4,4))}] (no penalty)',
+        'Rails displayed: '+(', '.join(rails) or 'none')+'; side/heel rails are not expanded into foot-window holds.',
+        'Rail allowance: caller may raise max by 1/3 on its rail side; not a score multiplier (caller state unavailable).',
+        'S same-direction: '+penalty(same),
+        'G gaston: '+penalty(max(into,out))+f'; into={bool(into)}, out={bool(out)} (combined once)',
+        'F missing opposing foot: '+penalty(missing)+'; opposing window ['+ids(opposing)+']'+(' (not directional)' if not sb else ''),
+        'U undercling: '+('ON x4/3; support gate '+('PASS' if under_a and under_b else 'FAIL')+f'; target [{ids(under_a)}], previous [{ids(under_b)}]' if b==3 else 'OFF'),
+        f'X crossover/bump: {"ON x1.5 +100" if cross else "OFF"}; prior col delta {previous_dc:+}, final {dc:+} (geometry proxy)',
+        'Long vertical move: '+('ON +100' if not cross and dc==0 and dr>2 else 'OFF'),
+        'Alternate base references: '+ids([x[0] for x in prior[-3:-1]] if len(prior)>3 else [prior[-2][0]] if len(prior)>2 else [])+'; considered only when caller max >500.',
+        'Audit reconstructs prior entries; runtime generator state is not recorded. Earlier handholds count as feet.',
+        'Rate ONLY the final move. Add corrections as a note, e.g. 7 no crossover; feet 204 405.'
+    ]
+
+class Dashboard:
+    """Curses owns the screen only while prompting; serial writes stay unchanged."""
+    def __init__(self,args,ordered):self.args=args;self.ordered=ordered
+    def ask(self,rows,number,case,command,message):
+        import curses
+        import textwrap
+        def run(win):
+            curses.curs_set(1)
+            if curses.has_colors():
+                curses.start_color();curses.use_default_colors()
+                for n,col in enumerate((curses.COLOR_CYAN,curses.COLOR_GREEN,curses.COLOR_YELLOW,curses.COLOR_MAGENTA),1):curses.init_pair(n,col,-1)
+            def color(n):return curses.color_pair(n) if curses.has_colors() else 0
+            answer='';page=0
+            while True:
+                height,width=win.getmaxyx();win.erase()
+                def put(y,t,attr=0):
+                    if 0<=y<height:
+                        try:win.addnstr(y,0,t,max(1,width-1),attr)
+                        except curses.error:pass
+                put(0,f'HOMEWALL v{SCRIPT_VERSION} | Test {number}/{len(self.ordered)} | rate LAST move',color(1)|curses.A_BOLD)
+                latest={(r['case_id'],r['case_sha256']):r for r in rows if r['climber']==self.args.climber and r['dry_run']==str(self.args.dry_run)}
+                cols=max(1,(width-1)//9);gridrows=(len(self.ordered)+cols-1)//cols
+                # All tests occupy fixed cells when space permits. Small terminals page the grid.
+                shown=min(gridrows,max(1,height//2-2));start=((number-1)//cols//shown)*shown if shown<gridrows else 0
+                for rr in range(shown):
+                    for cc in range(cols):
+                        i=(rr+start)*cols+cc
+                        if i>=len(self.ordered):break
+                        c=self.ordered[i];r=latest.get((c['id'],digest(c)));value=str(r['rating']) if r and r['status']=='rated' else 'skip' if r else '--'
+                        label=f'{i+1:03}:{value:>4} '
+                        attr=color(4)|curses.A_BOLD if i+1==number else color(2) if r and r['status']=='rated' else color(3) if r else 0
+                        try:win.addnstr(1+rr,cc*9,label,8,attr)
+                        except curses.error:pass
+                y=1+shown
+                put(y,'TESTS: -- pending | green rated | yellow skipped | pink current'+(' | grid paged: enlarge terminal for all' if shown<gridrows else ''),color(1));y+=1
+                detail=modifier_lines(case)
+                detail+=['TX'+(' (DRY RUN)' if self.args.dry_run else '')+': echo '+shlex.quote(command.rstrip('\n'))+' > '+shlex.quote(self.args.port)]
+                wrapped=[line for t in detail for line in (textwrap.wrap(t,max(10,width-1)) or [''])]
+                room=max(1,height-y-4);pages=max(1,(len(wrapped)+room-1)//room);page=min(page,pages-1)
+                for j,t in enumerate(wrapped[page*room:(page+1)*room]):put(y+j,t,color(3) if 'ON ' in t or 'FAIL' in t else 0)
+                put(height-4,f'Modifiers {page+1}/{pages}: Up/Down or PgUp/PgDn | '+message,color(1))
+                put(height-3,'1-11 [note] | r resend | s skip | h history | q quit')
+                put(height-2,'Rating: '+answer)
+                win.move(height-2,min(width-2,8+len(answer)));win.refresh()
+                k=win.get_wch()
+                if k in ('\n','\r',curses.KEY_ENTER):return answer.strip()
+                if k in (curses.KEY_NPAGE,curses.KEY_DOWN):page=(page+1)%pages
+                elif k in (curses.KEY_PPAGE,curses.KEY_UP):page=(page-1)%pages
+                elif k in (curses.KEY_BACKSPACE,'\x7f','\b'):answer=answer[:-1]
+                elif k=='\x03':raise KeyboardInterrupt
+                elif isinstance(k,str) and k.isprintable():answer+=k
+        return curses.wrapper(run)
+
+SCRIPT_VERSION = "2026.10.12.1"
 
 def main():
     print(f"HomeWall Calibration v{SCRIPT_VERSION}", flush=True)
@@ -192,6 +310,7 @@ def main():
     ap.add_argument('--seed',type=int,default=20261009)
     ap.add_argument('--repeat-rated',action='store_true');ap.add_argument('--dry-run',action='store_true')
     ap.add_argument('--validate',action='store_true',help='Validate cases and exit without serial or logging')
+    ap.add_argument('--plain',action='store_true',help='Scrolling text instead of fixed color dashboard')
     args=ap.parse_args()
     if args.write_example:
         with open(args.write_example,'x') as f:json.dump(example_cases(),f,indent=2);f.write('\n')
@@ -217,6 +336,7 @@ def main():
         # numbers stay sequential on first use and stable across resumes.
         ordered_cases=list(cases)
         if args.shuffle:random.Random(args.seed).shuffle(ordered_cases)
+        dashboard=Dashboard(args,ordered_cases) if not args.plain and sys.stdin.isatty() and sys.stdout.isatty() and os.environ.get('TERM','dumb')!='dumb' else None
         queue=[(i+1,c) for i,c in enumerate(ordered_cases)
                if args.repeat_rated or (c['id'],digest(c)) not in completed]
         f.seek(0,2);writer=csv.DictWriter(f,fieldnames=FIELDS)
@@ -241,10 +361,18 @@ def main():
                 if wall:wall.display(values,command)
                 else:print('DRY RUN:',command.strip())
                 started=time.monotonic()
+                message="Command sent" if wall else "Dry run; no command sent"
                 while True:
-                    show_rating_history(rows,args.climber,args.dry_run,current_cases)
-                    print(f'\nCurrent test {number}')
-                    answer=input('Rating 1-11 [optional note], r=repeat, h=all ratings, s=skip, q=quit: ').strip()
+                    if dashboard:
+                        answer=dashboard.ask(rows,number,case,command,message)
+                    else:
+                        print('\n'+'\n'.join(modifier_lines(case)))
+                        latest={(r['case_id'],r['case_sha256']):r for r in rows if r['climber']==args.climber and r['dry_run']==str(args.dry_run)}
+                        for i,c in enumerate(ordered_cases,1):
+                            result=latest.get((c['id'],digest(c)))
+                            print(f"{i:03}: "+(str(result['rating']) if result and result['status']=='rated' else 'skip' if result else '--'),end='  ' if i%8 else '\n')
+                        print()
+                        answer=input('Rating 1-11 [note], r/h/s/q: ').strip()
                     parts=answer.split(maxsplit=1);token=parts[0].lower() if parts else ''
                     if token=='q':return
                     if token=='h':
@@ -254,10 +382,11 @@ def main():
                     if token=='r':
                         if wall:wall.display(values,command)
                         else:print(command.strip())
+                        message='Command resent' if wall else 'Dry run repeated'
                         continue
                     rating=int(token) if token.isdigit() else None
                     if token!='s' and (rating is None or not 1<=rating<=11):
-                        print('Enter 1-11, r, h, s, or q.');continue
+                        message='Enter 1-11, r, h, s, or q.';print(message);continue
                     row=dict(timestamp_utc=datetime.now(timezone.utc).isoformat(),session_id=session,
                         climber=args.climber,case_number=number,case_id=case['id'],case_sha256=digest(case),
                         dataset_sha256=dataset,status='skipped' if token=='s' else 'rated',

@@ -1101,7 +1101,8 @@ void setaRandomProblem() {
   // Main-move lower bounds, estimated from the old 5..1 score windows.
   // Approximate calibration; tune independently from the upper bounds.
   int min_diff_per_level[11] = {
-    0, 0, 0, 0, 105, 250, 600, 1100, 1465, 1880, 2490
+    //  0, 205, 265, 340, 485, 665, 1110, 1790, 2275, 2825, 3650
+         0, 0,   0,   0,  105, 260,  600, 1100, 1465, 1880, 2490
   };
   int WH_per_level[11]=  {0, 4, 5, 6, 7, 8, 9, 9, 9, 9, 9};
                       // {300, 300, 350, 471, 653,  889, 1177, 1513, 1896, 2325, 2797}; Pre original
